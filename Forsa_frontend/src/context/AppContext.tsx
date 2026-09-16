@@ -165,14 +165,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   // ── Auth State ──
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>({
-    id: 'usr-1',
-    name: 'أحمد الرشيد',
-    email: 'ahmed.rashid.dev@example.com',
-    role: 'seeker',
-    avatar: 'أر',
-    headline: 'Senior Full Stack Developer متخصص في معمارية تطبيقات الويب باستخدام React, TypeScript و Node.js.',
-    isLoggedIn: true,
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem('forsa_logged_out') === 'true') {
+      return null;
+    }
+    return {
+      id: 'usr-1',
+      name: 'أحمد الرشيد',
+      email: 'ahmed.rashid.dev@example.com',
+      role: 'seeker',
+      avatar: 'أر',
+      headline: 'Senior Full Stack Developer متخصص في معمارية تطبيقات الويب باستخدام React, TypeScript و Node.js.',
+      isLoggedIn: true,
+    };
   });
   const [userRole, setUserRole] = useState<UserRole>('seeker');
 
@@ -212,8 +217,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     let isMounted = true;
     const fetchBackendData = async () => {
       try {
-        if (typeof window !== 'undefined' && !localStorage.getItem('forsa_auth_token')) {
-          localStorage.setItem('forsa_auth_token', '61d2952477e3259e62dfb7cfd37f15b5a608db69');
+        const isLoggedOut = typeof window !== 'undefined' && localStorage.getItem('forsa_logged_out') === 'true';
+        let token = typeof window !== 'undefined' ? localStorage.getItem('forsa_auth_token') : null;
+
+        if (!isLoggedOut && !token && typeof window !== 'undefined') {
+          token = '61d2952477e3259e62dfb7cfd37f15b5a608db69';
+          localStorage.setItem('forsa_auth_token', token);
         }
 
         const [
@@ -226,7 +235,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           backendConvs,
           backendNotifs
         ] = await Promise.all([
-          authAPI.getCurrentUser(null),
+          (!isLoggedOut && token) ? authAPI.getCurrentUser(null) : Promise.resolve(null),
           jobsAPI.getJobs(undefined, initialJobs),
           companiesAPI.getCompanies(initialCompanies),
           postsAPI.getPosts(undefined, initialPosts),
@@ -237,13 +246,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ]);
 
         if (isMounted) {
-          if (backendUser) {
+          if (backendUser && !isLoggedOut) {
             setCurrentUser(backendUser);
             setUserRole(backendUser.role || 'seeker');
             if ((backendUser as any).skills?.length > 0) setSkills((backendUser as any).skills);
             if ((backendUser as any).experiences?.length > 0) setExperiences((backendUser as any).experiences);
             if ((backendUser as any).educations?.length > 0) setEducations((backendUser as any).educations);
             if ((backendUser as any).resumes?.length > 0) setCvFiles((backendUser as any).resumes);
+          } else if (isLoggedOut) {
+            setCurrentUser(null);
           }
           if (backendJobs && backendJobs.length > 0) setJobs(backendJobs);
           if (backendCompanies && backendCompanies.length > 0) setCompanies(backendCompanies);
@@ -267,6 +278,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // ── Auth ──
   const handleLoginSuccess = useCallback((user: AuthUser) => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('forsa_logged_out');
+    }
     setCurrentUser(user);
     setUserRole(user.role);
     if (user.role === 'employer') {
@@ -279,6 +293,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const handleLogout = useCallback(() => {
     authAPI.logout();
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('forsa_logged_out', 'true');
+      localStorage.removeItem('forsa_auth_token');
+    }
     setCurrentUser(null);
     navigate('landing');
     showToast('تم تسجيل الخروج بنجاح 👋', 'تم إنهاء الجلسة، يمكنك تسجيل الدخول في أي وقت');

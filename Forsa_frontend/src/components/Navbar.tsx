@@ -88,10 +88,10 @@ export const Navbar: React.FC<NavbarProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const isLoggedIn = currentUser ? currentUser.isLoggedIn : true;
-  const userName = currentUser?.name || 'أحمد الرشيد';
-  const userInitials = currentUser?.avatar || userName.slice(0, 2);
-  const userEmail = currentUser?.email || 'ahmed.rashid.dev@example.com';
+  const isLoggedIn = Boolean(currentUser && currentUser.isLoggedIn);
+  const userName = currentUser?.name || '';
+  const userInitials = currentUser?.avatar || (userName ? userName.slice(0, 2) : 'زائر');
+  const userEmail = currentUser?.email || '';
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
