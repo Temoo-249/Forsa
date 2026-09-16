@@ -1,0 +1,31 @@
+# Python / Django
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+db.sqlite3
+*.sqlite3
+venv/
+.env
+*.egg-info/
+dist/
+staticfiles/
+media/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+Forsa_frontend/dist/
+Forsa_frontend/.next/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

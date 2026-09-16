@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+  <defs>
+    <!-- Vibrant Royal Tech Blue matching uploaded image -->
+    <linearGradient id="forsaBlue" x1="110" y1="50" x2="310" y2="350" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1E88E5" />
+      <stop offset="100%" stop-color="#1565C0" />
+    </linearGradient>
+
+    <!-- Vibrant Dynamic Ascending Orange matching uploaded image -->
+    <linearGradient id="forsaOrange" x1="110" y1="350" x2="280" y2="130" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FF6D00" />
+      <stop offset="60%" stop-color="#FF7A00" />
+      <stop offset="100%" stop-color="#FFA000" />
+    </linearGradient>
+
+    <!-- Subtle drop shadow for crisp visual contrast -->
+    <filter id="forsaShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#0f172a" flood-opacity="0.08" />
+    </filter>
+  </defs>
+
+  <g filter="url(#forsaShadow)">
+    <!-- 1. Blue Upper Arch and Top Arm of Letter 'F' -->
+    <path
+      d="M 116 168
+         C 116 102, 148 54, 218 54
+         L 282 54
+         C 300 54, 314 62, 316 75
+         C 318 88, 302 102, 280 106
+         L 230 108
+         C 184 108, 166 128, 166 166
+         L 166 174
+         C 150 186, 134 200, 116 216
+         Z"
+      fill="url(#forsaBlue)"
+    />
+
+    <!-- 2. Blue Lower Base / Trunk of Letter 'F' -->
+    <path
+      d="M 116 346
+         L 174 346
+         C 170 294, 166 254, 162 238
+         C 142 276, 126 314, 116 346
+         Z"
+      fill="url(#forsaBlue)"
+    />
+
+    <!-- 3. Vibrant Ascending Orange Arrow (Opportunity & Growth) -->
+    <path
+      d="M 116 232
+         C 136 214, 162 194, 212 158
+         L 198 140
+         C 194 133, 199 126, 207 127
+         L 282 144
+         C 289 146, 291 154, 285 160
+         L 230 210
+         C 223 216, 214 211, 216 203
+         L 222 186
+         C 180 220, 144 274, 116 346
+         C 116 304, 116 264, 116 232
+         Z"
+      fill="url(#forsaOrange)"
+    />
+  </g>
+</svg>
+

@@ -1,0 +1,8 @@
+{
+  "name": "فرصة - منصة التوظيف والتواصل المهني",
+  "description": "منصة فرصة الحديثة للتوظيف والتواصل المهني في العالم العربي بتصميم عصري باللونين الأبيض والأزرق وسهولة تامة في الاستخدام.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
