@@ -1,8 +1,17 @@
 'use client';
 
 import React from 'react';
-import App from '../../App';
+import { useApp } from '../../context/AppContext';
+import { MessagesView } from '../../components/MessagesView';
 
 export default function MessagesPage() {
-  return <App initialTab="messages" />;
+  const app = useApp();
+
+  return (
+    <MessagesView
+      conversations={app.conversations}
+      onSendMessage={app.handleSendMessage}
+      onRespondOffer={app.handleRespondOffer}
+    />
+  );
 }

@@ -1,0 +1,595 @@
+'use client';
+
+import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import {
+  TabType,
+  Job,
+  Application,
+  Post,
+  Conversation,
+  NotificationItem,
+  SkillItem,
+  ExperienceItem,
+  EducationItem,
+  CVFile,
+  UserRole,
+  Company,
+  JobApplicant,
+  ApplicationStatus,
+  AuthUser
+} from '../types';
+import {
+  initialJobs,
+  initialApplications,
+  initialPosts,
+  initialConversations,
+  initialNotifications,
+  initialSkills,
+  initialExperiences,
+  initialEducations,
+  initialCVFiles,
+  initialCompanies,
+  initialCompanyApplicants
+} from '../data/mockData';
+import {
+  authAPI,
+  jobsAPI,
+  applicationsAPI,
+  companiesAPI,
+  postsAPI,
+  chatAPI,
+  notificationsAPI
+} from '../services/api';
+
+// ─── Route Mapping ───────────────────────────────────────────────
+const TAB_TO_ROUTE: Record<TabType, string> = {
+  'landing': '/',
+  'feed': '/feed',
+  'jobs': '/jobs',
+  'applications': '/applications',
+  'messages': '/messages',
+  'profile': '/profile',
+  'companies': '/companies',
+  'employer-hub': '/employer-hub',
+  'auth': '/auth',
+};
+
+function pathnameToTab(pathname: string): TabType {
+  const path = pathname.replace(/^\//, '');
+  if (path === '') return 'landing';
+  if (path === 'login' || path === 'register') return 'auth';
+  const validTabs = ['jobs', 'applications', 'feed', 'messages', 'profile', 'companies', 'employer-hub', 'auth', 'landing'];
+  if (validTabs.includes(path)) return path as TabType;
+  return 'landing';
+}
+
+// ─── Context Type ────────────────────────────────────────────────
+interface AppContextType {
+  // Navigation
+  currentTab: TabType;
+  navigate: (tab: TabType) => void;
+
+  // Auth
+  currentUser: AuthUser | null;
+  setCurrentUser: React.Dispatch<React.SetStateAction<AuthUser | null>>;
+  userRole: UserRole;
+  setUserRole: React.Dispatch<React.SetStateAction<UserRole>>;
+  handleLoginSuccess: (user: AuthUser) => void;
+  handleLogout: () => void;
+  handleToggleRole: () => void;
+
+  // Jobs
+  jobs: Job[];
+  setJobs: React.Dispatch<React.SetStateAction<Job[]>>;
+  handleToggleSaveJob: (jobId: string) => void;
+  handleApplySuccess: (jobId: string, coverNote: string, cvName: string) => void;
+
+  // Applications
+  applications: Application[];
+
+  // Posts
+  posts: Post[];
+  handleAddPost: (data: Omit<Post, 'id' | 'likes' | 'comments' | 'timeAgo' | 'isLiked'>) => void;
+  handleLikePost: (postId: string) => void;
+
+  // Messages
+  conversations: Conversation[];
+  handleSendMessage: (convId: string, text: string) => void;
+  handleRespondOffer: (convId: string, messageId: string, accepted: boolean) => void;
+
+  // Notifications
+  notifications: NotificationItem[];
+  handleNotificationClick: (notif: NotificationItem) => void;
+  handleMarkAllNotificationsRead: () => void;
+
+  // Profile
+  skills: SkillItem[];
+  handleAddSkill: (skill: Omit<SkillItem, 'id'>) => void;
+  experiences: ExperienceItem[];
+  handleAddExperience: (exp: Omit<ExperienceItem, 'id'>) => void;
+  educations: EducationItem[];
+  cvFiles: CVFile[];
+  handleUploadCV: (name: string, size: string) => void;
+  handleSetDefaultCV: (id: string) => void;
+  handleDeleteCV: (id: string) => void;
+
+  // Companies & Employer
+  companies: Company[];
+  employerApplicants: JobApplicant[];
+  myEmployerCompany: Company;
+  handlePostJob: (job: Job) => void;
+  handleUpdateApplicantStatus: (applicantId: string, status: ApplicationStatus) => void;
+  handleScheduleInterview: (applicantId: string, interviewDate: string) => void;
+  handleContactCandidate: (applicant: JobApplicant) => void;
+  handleUpdateCompany: (updatedCompany: Company) => void;
+  handleDeleteJob: (jobId: string) => void;
+  handleToggleJobStatus: (jobId: string) => void;
+
+  // Modals
+  selectedJobForDetail: Job | null;
+  setSelectedJobForDetail: (job: Job | null) => void;
+  selectedJobForApply: Job | null;
+  setSelectedJobForApply: (job: Job | null) => void;
+  isPostJobModalOpen: boolean;
+  setIsPostJobModalOpen: (open: boolean) => void;
+
+  // Toast
+  toastMessage: { title: string; subtitle?: string; actionLabel?: string; onAction?: () => void } | null;
+  setToastMessage: React.Dispatch<React.SetStateAction<{ title: string; subtitle?: string; actionLabel?: string; onAction?: () => void } | null>>;
+  showToast: (title: string, subtitle?: string, actionLabel?: string, onAction?: () => void) => void;
+}
+
+// ─── Context ─────────────────────────────────────────────────────
+const AppContext = createContext<AppContextType | null>(null);
+
+export function useApp(): AppContextType {
+  const ctx = useContext(AppContext);
+  if (!ctx) throw new Error('useApp must be used within AppProvider');
+  return ctx;
+}
+
+// ─── Provider ────────────────────────────────────────────────────
+export function AppProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // ── Derived Navigation State ──
+  const currentTab = useMemo(() => pathnameToTab(pathname), [pathname]);
+
+  const navigate = useCallback((tab: TabType) => {
+    router.push(TAB_TO_ROUTE[tab] || '/');
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [router]);
+
+  // ── Auth State ──
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>({
+    id: 'usr-1',
+    name: 'أحمد الرشيد',
+    email: 'ahmed.rashid.dev@example.com',
+    role: 'seeker',
+    avatar: 'أر',
+    headline: 'Senior Full Stack Developer متخصص في معمارية تطبيقات الويب باستخدام React, TypeScript و Node.js.',
+    isLoggedIn: true,
+  });
+  const [userRole, setUserRole] = useState<UserRole>('seeker');
+
+  // ── Core Data ──
+  const [jobs, setJobs] = useState<Job[]>(initialJobs);
+  const [applications, setApplications] = useState<Application[]>(initialApplications);
+  const [posts, setPosts] = useState<Post[]>(initialPosts);
+  const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
+  const [notifications, setNotifications] = useState<NotificationItem[]>(initialNotifications);
+  const [skills, setSkills] = useState<SkillItem[]>(initialSkills);
+  const [experiences, setExperiences] = useState<ExperienceItem[]>(initialExperiences);
+  const [educations, setEducations] = useState<EducationItem[]>(initialEducations);
+  const [cvFiles, setCvFiles] = useState<CVFile[]>(initialCVFiles);
+
+  // ── Companies & Employer ──
+  const [companies, setCompanies] = useState<Company[]>(initialCompanies);
+  const [employerApplicants, setEmployerApplicants] = useState<JobApplicant[]>(initialCompanyApplicants);
+  const [myEmployerCompany, setMyEmployerCompany] = useState<Company>(initialCompanies[0]);
+
+  // ── Modals ──
+  const [isPostJobModalOpen, setIsPostJobModalOpen] = useState(false);
+  const [selectedJobForDetail, setSelectedJobForDetail] = useState<Job | null>(null);
+  const [selectedJobForApply, setSelectedJobForApply] = useState<Job | null>(null);
+
+  // ── Toast ──
+  const [toastMessage, setToastMessage] = useState<{ title: string; subtitle?: string; actionLabel?: string; onAction?: () => void } | null>(null);
+
+  const showToast = useCallback((title: string, subtitle?: string, actionLabel?: string, onAction?: () => void) => {
+    setToastMessage({ title, subtitle, actionLabel, onAction });
+    setTimeout(() => {
+      setToastMessage(prev => (prev?.title === title ? null : prev));
+    }, 5000);
+  }, []);
+
+  // ── Backend Sync on Mount ──
+  useEffect(() => {
+    let isMounted = true;
+    const fetchBackendData = async () => {
+      try {
+        const [backendJobs, backendCompanies, backendPosts, backendApps, backendConvs, backendNotifs] = await Promise.all([
+          jobsAPI.getJobs(undefined, initialJobs),
+          companiesAPI.getCompanies(initialCompanies),
+          postsAPI.getPosts(undefined, initialPosts),
+          applicationsAPI.getMyApplications(initialApplications),
+          chatAPI.getConversations(initialConversations),
+          notificationsAPI.getNotifications(initialNotifications)
+        ]);
+        if (isMounted) {
+          if (backendJobs && backendJobs.length > 0) setJobs(backendJobs);
+          if (backendCompanies && backendCompanies.length > 0) setCompanies(backendCompanies);
+          if (backendPosts && backendPosts.length > 0) setPosts(backendPosts);
+          if (backendApps && backendApps.length > 0) setApplications(backendApps);
+          if (backendConvs && backendConvs.length > 0) setConversations(backendConvs);
+          if (backendNotifs && backendNotifs.length > 0) setNotifications(backendNotifs);
+        }
+      } catch (err) {
+        console.warn('Sync with backend failed, keeping mock data:', err);
+      }
+    };
+    fetchBackendData();
+    return () => { isMounted = false; };
+  }, []);
+
+  // ═══════════════════════════════════════════════════════════════
+  // HANDLERS (ported from App.tsx)
+  // ═══════════════════════════════════════════════════════════════
+
+  // ── Auth ──
+  const handleLoginSuccess = useCallback((user: AuthUser) => {
+    setCurrentUser(user);
+    setUserRole(user.role);
+    if (user.role === 'employer') {
+      navigate('employer-hub');
+    } else {
+      navigate('jobs');
+    }
+    showToast(`أهلاً بك مجدداً يا ${user.name}! 👋`, 'تم تسجيل الدخول وتنشيط جلستك بنجاح');
+  }, [navigate, showToast]);
+
+  const handleLogout = useCallback(() => {
+    authAPI.logout();
+    setCurrentUser(null);
+    navigate('landing');
+    showToast('تم تسجيل الخروج بنجاح 👋', 'تم إنهاء الجلسة، يمكنك تسجيل الدخول في أي وقت');
+  }, [navigate, showToast]);
+
+  const handleToggleRole = useCallback(() => {
+    const nextRole: UserRole = userRole === 'seeker' ? 'employer' : 'seeker';
+    setUserRole(nextRole);
+    if (currentUser) {
+      setCurrentUser(prev => prev ? { ...prev, role: nextRole } : null);
+    }
+    if (nextRole === 'employer' && currentTab === 'applications') {
+      navigate('employer-hub');
+    }
+    showToast(
+      nextRole === 'employer'
+        ? 'تم التبديل إلى وضع صاحب عمل / شركة'
+        : 'تم التبديل إلى وضع باحث عن عمل'
+    );
+  }, [userRole, currentUser, currentTab, navigate, showToast]);
+
+  // ── Jobs ──
+  const handleToggleSaveJob = useCallback((jobId: string) => {
+    jobsAPI.toggleSave(jobId);
+    setJobs(prev => prev.map(job => {
+      if (job.id === jobId) {
+        const nextSaved = !job.isSaved;
+        showToast(nextSaved ? 'تم حفظ الوظيفة في قائمتك' : 'تمت إزالة الوظيفة من المحفوظات');
+        return { ...job, isSaved: nextSaved };
+      }
+      return job;
+    }));
+  }, [showToast]);
+
+  const handleApplySuccess = useCallback((jobId: string, coverNote: string, cvName: string) => {
+    const job = jobs.find(j => j.id === jobId);
+    if (!job) return;
+
+    jobsAPI.apply(jobId, { resumeFileName: cvName, coverNote });
+
+    setJobs(prev => prev.map(j => j.id === jobId ? { ...j, applied: true, applicantsCount: j.applicantsCount + 1 } : j));
+
+    const newApp: Application = {
+      id: `app-${Date.now()}`,
+      jobId: job.id,
+      jobTitle: job.title,
+      company: job.company,
+      logo: job.logo,
+      applyDate: 'اليوم',
+      status: 'التقدم',
+      currentStepIndex: 0,
+      resumeFileName: cvName,
+      timeline: [
+        { title: 'تم تقديم الطلب بنجاح', date: 'اليوم، الآن', completed: true, note: coverNote || 'تم إرسال السيرة الذاتية لمدير التوظيف.' },
+        { title: 'المراجعة والفرز الأولي', date: 'قيد الانتظار', completed: false, active: true },
+        { title: 'الاختصار (Shortlisting)', date: 'قريباً', completed: false },
+        { title: 'المقابلة', date: 'بانتظار التحديد', completed: false },
+        { title: 'العرض الوظيفي', date: 'قريباً', completed: false },
+        { title: 'التوظيف النهائي', date: 'قريباً', completed: false },
+      ]
+    };
+
+    setApplications(prev => [newApp, ...prev]);
+
+    setNotifications(prev => [
+      {
+        id: `notif-${Date.now()}`,
+        icon: '💼',
+        title: `تم استلام طلب تقديمك بنجاح لمنصب ${job.title} في ${job.company}`,
+        time: 'الآن',
+        unread: true,
+        actionTab: 'applications'
+      },
+      ...prev
+    ]);
+
+    showToast(
+      `تم إرسال طلبك إلى ${job.company} بنجاح!`,
+      'يمكنك تتبع حالة الطلب خطوة بخطوة من قسم طلباتي',
+      'عرض في طلباتي',
+      () => navigate('applications')
+    );
+  }, [jobs, navigate, showToast]);
+
+  // ── Posts ──
+  const handleAddPost = useCallback((newPostData: Omit<Post, 'id' | 'likes' | 'comments' | 'timeAgo' | 'isLiked'>) => {
+    postsAPI.createPost({
+      content: newPostData.content,
+      skills: newPostData.skills,
+      category: newPostData.category || 'عام'
+    });
+
+    const post: Post = {
+      ...newPostData,
+      id: `post-${Date.now()}`,
+      likes: 1,
+      comments: 0,
+      timeAgo: 'الآن',
+      isLiked: true
+    };
+    setPosts(prev => [post, ...prev]);
+    showToast('تم نشر منشورك في المجتمع المهني بنجاح');
+  }, [showToast]);
+
+  const handleLikePost = useCallback((postId: string) => {
+    postsAPI.toggleLike(postId);
+    setPosts(prev => prev.map(p => {
+      if (p.id === postId) {
+        return { ...p, likes: p.isLiked ? p.likes - 1 : p.likes + 1, isLiked: !p.isLiked };
+      }
+      return p;
+    }));
+  }, []);
+
+  // ── Messages ──
+  const handleSendMessage = useCallback((convId: string, text: string) => {
+    chatAPI.sendMessage(convId, { text, sender: 'user' });
+
+    const now = new Date();
+    const timeStr = `${now.getHours() % 12 || 12}:${now.getMinutes().toString().padStart(2, '0')} ${now.getHours() >= 12 ? 'م' : 'ص'}`;
+
+    const newMsg = { id: `m-${Date.now()}`, sender: 'user' as const, text, time: timeStr };
+
+    setConversations(prev => prev.map(conv => {
+      if (conv.id === convId) {
+        return { ...conv, lastMessage: text, lastMessageTime: 'الآن', messages: [...conv.messages, newMsg] };
+      }
+      return conv;
+    }));
+
+    setTimeout(() => {
+      setConversations(prev => prev.map(conv => {
+        if (conv.id === convId) {
+          const reply = {
+            id: `reply-${Date.now()}`,
+            sender: 'company' as const,
+            text: 'شكراً لرسالتك! استلمنا تفاصيلك وسيقوم مسؤول التوظيف بالرد عليك في أقرب وقت.',
+            time: 'الآن'
+          };
+          return { ...conv, lastMessage: reply.text, lastMessageTime: 'الآن', messages: [...conv.messages, reply] };
+        }
+        return conv;
+      }));
+    }, 1500);
+  }, []);
+
+  const handleRespondOffer = useCallback((convId: string, messageId: string, accepted: boolean) => {
+    chatAPI.respondOffer(convId, messageId, accepted ? 'accept' : 'decline');
+
+    setConversations(prev => prev.map(c => {
+      if (c.id === convId) {
+        return {
+          ...c,
+          messages: c.messages.map(m => {
+            if (m.id === messageId && m.offerDetails) {
+              return { ...m, offerDetails: { ...m.offerDetails, accepted, declined: !accepted } };
+            }
+            return m;
+          })
+        };
+      }
+      return c;
+    }));
+
+    if (accepted) {
+      showToast('تهانينا الحارة! 🎉 تم قبول العرض الوظيفي وسنقوم بتحديث ملفك رسمياً');
+    } else {
+      showToast('تم تسجيل اعتذارك عن العرض الوظيفي');
+    }
+  }, [showToast]);
+
+  // ── Profile ──
+  const handleAddSkill = useCallback((skill: Omit<SkillItem, 'id'>) => {
+    setSkills(prev => [...prev, { ...skill, id: `sk-${Date.now()}` }]);
+    showToast(`تمت إضافة مهارة "${skill.name}" إلى ملفك الشخصي`);
+  }, [showToast]);
+
+  const handleAddExperience = useCallback((exp: Omit<ExperienceItem, 'id'>) => {
+    setExperiences(prev => [{ ...exp, id: `exp-${Date.now()}` }, ...prev]);
+    showToast(`تمت إضافة خبرة "${exp.role}" في ${exp.company}`);
+  }, [showToast]);
+
+  const handleUploadCV = useCallback((name: string, size: string) => {
+    const newCV: CVFile = { id: `cv-${Date.now()}`, name, size, uploadDate: 'اليوم', isDefault: false };
+    setCvFiles(prev => [newCV, ...prev]);
+    showToast(`تم رفع ملف السيرة الذاتية "${name}" بنجاح`);
+  }, [showToast]);
+
+  const handleSetDefaultCV = useCallback((id: string) => {
+    setCvFiles(prev => prev.map(c => ({ ...c, isDefault: c.id === id })));
+    showToast('تم تعيين الملف كسيرة ذاتية أساسية للتقديم');
+  }, [showToast]);
+
+  const handleDeleteCV = useCallback((id: string) => {
+    setCvFiles(prev => prev.filter(c => c.id !== id));
+    showToast('تم حذف الملف بنجاح');
+  }, [showToast]);
+
+  // ── Notifications ──
+  const handleNotificationClick = useCallback((notif: NotificationItem) => {
+    setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, unread: false } : n));
+    if (notif.actionTab) {
+      navigate(notif.actionTab);
+    }
+  }, [navigate]);
+
+  const handleMarkAllNotificationsRead = useCallback(() => {
+    notificationsAPI.markAllRead();
+    setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
+    showToast('تم تعليم جميع الإشعارات كمقروءة');
+  }, [showToast]);
+
+  // ── Employer & Companies ──
+  const handlePostJob = useCallback((newJob: Job) => {
+    jobsAPI.createJob(newJob);
+    setJobs(prev => [newJob, ...prev]);
+    setCompanies(prev => prev.map(c => {
+      if (c.name.trim().toLowerCase() === newJob.company.trim().toLowerCase()) {
+        return { ...c, openJobsCount: c.openJobsCount + 1 };
+      }
+      return c;
+    }));
+    setMyEmployerCompany(prev => ({ ...prev, openJobsCount: prev.openJobsCount + 1 }));
+    showToast(`تم نشر وظيفة "${newJob.title}" بنجاح!`, 'تظهر الآن للباحثين عن عمل في استكشاف الوظائف.');
+  }, [showToast]);
+
+  const handleUpdateApplicantStatus = useCallback((applicantId: string, status: ApplicationStatus) => {
+    applicationsAPI.updateApplicantStatus(applicantId, { status });
+    setEmployerApplicants(prev => prev.map(app => app.id === applicantId ? { ...app, status } : app));
+    showToast(`تم تحديث حالة المرشح إلى: ${status}`);
+  }, [showToast]);
+
+  const handleScheduleInterview = useCallback((applicantId: string, interviewDate: string) => {
+    applicationsAPI.updateApplicantStatus(applicantId, { interviewDate, status: 'المقابلة' });
+    setEmployerApplicants(prev => prev.map(app => app.id === applicantId ? { ...app, interviewDate, status: 'المقابلة' } : app));
+    showToast('تم تحديد موعد المقابلة بنجاح', `الموعد: ${interviewDate}`);
+  }, [showToast]);
+
+  const handleContactCandidate = useCallback((applicant: JobApplicant) => {
+    const existing = conversations.find(c => c.companyName === applicant.candidateName);
+    if (!existing) {
+      const newConv: Conversation = {
+        id: `conv-cand-${applicant.id}`,
+        companyName: applicant.candidateName,
+        companyLogo: applicant.candidateAvatar,
+        jobTitle: `مرشح لوظيفة ${applicant.jobTitle}`,
+        lastMessage: `مرحباً ${applicant.candidateName}، نود التواصل معك بخصوص طلبك لوظيفة ${applicant.jobTitle}.`,
+        lastMessageTime: 'الآن',
+        isOnline: true,
+        unreadCount: 0,
+        messages: [
+          {
+            id: `msg-${Date.now()}`,
+            sender: 'company',
+            text: `مرحباً ${applicant.candidateName}، نود التواصل معك بخصوص طلبك لوظيفة ${applicant.jobTitle}.`,
+            time: 'الآن'
+          }
+        ],
+        sharedFiles: [
+          { name: applicant.resumeFileName, date: applicant.appliedDate, size: '2.4 MB' }
+        ]
+      };
+      setConversations(prev => [newConv, ...prev]);
+    }
+    navigate('messages');
+    showToast(`تم فتح المحادثة مع المرشح ${applicant.candidateName}`);
+  }, [conversations, navigate, showToast]);
+
+  const handleUpdateCompany = useCallback((updatedCompany: Company) => {
+    setCompanies(prev => prev.map(c => c.id === updatedCompany.id ? updatedCompany : c));
+    setMyEmployerCompany(updatedCompany);
+    showToast('تم حفظ وتحديث بيانات الشركة بنجاح');
+  }, [showToast]);
+
+  const handleDeleteJob = useCallback((jobId: string) => {
+    const jobToDelete = jobs.find(j => j.id === jobId);
+    setJobs(prev => prev.filter(j => j.id !== jobId));
+    if (jobToDelete) {
+      setCompanies(prev => prev.map(c => {
+        if (c.name.trim().toLowerCase() === jobToDelete.company.trim().toLowerCase()) {
+          return { ...c, openJobsCount: Math.max(0, c.openJobsCount - 1) };
+        }
+        return c;
+      }));
+      setMyEmployerCompany(prev => ({ ...prev, openJobsCount: Math.max(0, prev.openJobsCount - 1) }));
+    }
+    showToast('تم حذف الوظيفة من المنصة');
+  }, [jobs, showToast]);
+
+  const handleToggleJobStatus = useCallback((_jobId: string) => {
+    showToast('تم تغيير حالة الوظيفة');
+  }, [showToast]);
+
+  // ═══════════════════════════════════════════════════════════════
+  // CONTEXT VALUE
+  // ═══════════════════════════════════════════════════════════════
+  const value = useMemo<AppContextType>(() => ({
+    currentTab, navigate,
+    currentUser, setCurrentUser, userRole, setUserRole,
+    handleLoginSuccess, handleLogout, handleToggleRole,
+    jobs, setJobs, handleToggleSaveJob, handleApplySuccess,
+    applications,
+    posts, handleAddPost, handleLikePost,
+    conversations, handleSendMessage, handleRespondOffer,
+    notifications, handleNotificationClick, handleMarkAllNotificationsRead,
+    skills, handleAddSkill,
+    experiences, handleAddExperience,
+    educations,
+    cvFiles, handleUploadCV, handleSetDefaultCV, handleDeleteCV,
+    companies, employerApplicants, myEmployerCompany,
+    handlePostJob, handleUpdateApplicantStatus, handleScheduleInterview,
+    handleContactCandidate, handleUpdateCompany, handleDeleteJob, handleToggleJobStatus,
+    selectedJobForDetail, setSelectedJobForDetail,
+    selectedJobForApply, setSelectedJobForApply,
+    isPostJobModalOpen, setIsPostJobModalOpen,
+    toastMessage, setToastMessage, showToast,
+  }), [
+    currentTab, navigate,
+    currentUser, userRole,
+    handleLoginSuccess, handleLogout, handleToggleRole,
+    jobs, handleToggleSaveJob, handleApplySuccess,
+    applications,
+    posts, handleAddPost, handleLikePost,
+    conversations, handleSendMessage, handleRespondOffer,
+    notifications, handleNotificationClick, handleMarkAllNotificationsRead,
+    skills, handleAddSkill,
+    experiences, handleAddExperience,
+    educations,
+    cvFiles, handleUploadCV, handleSetDefaultCV, handleDeleteCV,
+    companies, employerApplicants, myEmployerCompany,
+    handlePostJob, handleUpdateApplicantStatus, handleScheduleInterview,
+    handleContactCandidate, handleUpdateCompany, handleDeleteJob, handleToggleJobStatus,
+    selectedJobForDetail, selectedJobForApply,
+    isPostJobModalOpen,
+    toastMessage, showToast,
+  ]);
+
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+}

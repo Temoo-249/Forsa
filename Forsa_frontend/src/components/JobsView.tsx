@@ -355,7 +355,7 @@ export const JobsView: React.FC<JobsViewProps> = ({
                           <div className="flex items-center gap-1.5 mb-0.5">
                             <span className="text-xs font-semibold text-slate-600">{job.company}</span>
                             {job.isVerified && (
-                              <ShieldCheck className="w-3.5 h-3.5 text-blue-600" title="شركة موثقة" />
+                              <span title="شركة موثقة"><ShieldCheck className="w-3.5 h-3.5 text-blue-600" /></span>
                             )}
                           </div>
                           <h3 

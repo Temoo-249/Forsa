@@ -1,8 +1,18 @@
 'use client';
 
 import React from 'react';
-import App from '../../App';
+import { useApp } from '../../context/AppContext';
+import { AuthView } from '../../components/AuthView';
 
 export default function RegisterPage() {
-  return <App initialTab="auth" />;
+  const app = useApp();
+
+  return (
+    <AuthView
+      initialMode="register"
+      onLoginSuccess={app.handleLoginSuccess}
+      onNavigateTab={app.navigate}
+      onCloseModal={() => app.navigate('landing')}
+    />
+  );
 }

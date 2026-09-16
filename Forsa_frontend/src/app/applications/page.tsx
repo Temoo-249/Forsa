@@ -1,8 +1,19 @@
 'use client';
 
 import React from 'react';
-import App from '../../App';
+import { useApp } from '../../context/AppContext';
+import { ApplicationsView } from '../../components/ApplicationsView';
 
 export default function ApplicationsPage() {
-  return <App initialTab="applications" />;
+  const app = useApp();
+
+  return (
+    <ApplicationsView
+      applications={app.applications}
+      onNavigateToChat={(_companyName) => {
+        app.navigate('messages');
+      }}
+      onExploreJobs={() => app.navigate('jobs')}
+    />
+  );
 }

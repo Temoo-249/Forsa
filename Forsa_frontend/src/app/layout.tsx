@@ -1,5 +1,7 @@
 import React from 'react';
 import './globals.css';
+import { AppProvider } from '../context/AppContext';
+import { AppShell } from '../components/AppShell';
 
 export const metadata = {
   title: 'فرصة - منصة التوظيف والتواصل المهني',
@@ -32,7 +34,11 @@ export default function RootLayout({
         />
       </head>
       <body className="font-sans bg-slate-50 text-slate-900 antialiased min-h-screen">
-        {children}
+        <AppProvider>
+          <AppShell>
+            {children}
+          </AppShell>
+        </AppProvider>
       </body>
     </html>
   );
