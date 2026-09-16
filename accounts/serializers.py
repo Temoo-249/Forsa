@@ -1,4 +1,4 @@
-﻿from rest_framework import serializers
+from rest_framework import serializers
 from .models import User, Skill, Experience, Education, CVFile
 
 class SkillSerializer(serializers.ModelSerializer):
@@ -25,6 +25,7 @@ class CVFileSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'uploadDate', 'size', 'isDefault', 'file']
 
 class UserSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
     companyName = serializers.CharField(source='company_name', required=False, allow_blank=True, allow_null=True)
     isLoggedIn = serializers.SerializerMethodField()
     skills = SkillSerializer(many=True, read_only=True)
@@ -35,10 +36,13 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'id', 'username', 'email', 'role', 'headline', 'avatar',
+            'id', 'username', 'name', 'email', 'role', 'headline', 'avatar',
             'companyName', 'phone', 'location', 'bio', 'isLoggedIn',
             'skills', 'experiences', 'educations', 'resumes'
         ]
+
+    def get_name(self, obj):
+        return obj.get_full_name() or obj.username
 
     def get_isLoggedIn(self, obj):
         return True

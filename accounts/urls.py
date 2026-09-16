@@ -1,7 +1,8 @@
-﻿from django.urls import path
+from django.urls import path
 from .views import (
     RegisterView, LoginView, CurrentUserView,
-    UserSkillsView, UserExperienceView, UserEducationView, UserResumesView
+    UserSkillsView, UserExperienceView, UserEducationView, UserResumesView,
+    UserResumeDetailView
 )
 
 urlpatterns = [
@@ -12,4 +13,5 @@ urlpatterns = [
     path('experience/', UserExperienceView.as_view(), name='user_experience'),
     path('education/', UserEducationView.as_view(), name='user_education'),
     path('resumes/', UserResumesView.as_view(), name='user_resumes'),
+    path('resumes/<int:pk>/', UserResumeDetailView.as_view(), name='user_resume_detail'),
 ]

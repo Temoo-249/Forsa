@@ -99,3 +99,27 @@ class UserResumesView(views.APIView):
             serializer.save(user=user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserResumeDetailView(views.APIView):
+    def delete(self, request, pk):
+        user = request.user if request.user.is_authenticated else User.objects.first()
+        try:
+            cv = CVFile.objects.get(id=pk, user=user)
+            cv.delete()
+            return Response({'success': True, 'message': 'Resume deleted'})
+        except CVFile.DoesNotExist:
+            return Response({'detail': 'Resume not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    def patch(self, request, pk):
+        user = request.user if request.user.is_authenticated else User.objects.first()
+        try:
+            cv = CVFile.objects.get(id=pk, user=user)
+            if request.data.get('isDefault') is not None:
+                if request.data.get('isDefault'):
+                    CVFile.objects.filter(user=user).update(is_default=False)
+                cv.is_default = bool(request.data.get('isDefault'))
+                cv.save()
+            return Response(CVFileSerializer(cv).data)
+        except CVFile.DoesNotExist:
+            return Response({'detail': 'Resume not found'}, status=status.HTTP_404_NOT_FOUND)
+

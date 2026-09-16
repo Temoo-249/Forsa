@@ -1,4 +1,4 @@
-﻿import { 
+import { 
   Job, 
   Application, 
   Post, 
@@ -90,6 +90,75 @@ export const authAPI = {
   logout() {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('forsa_auth_token');
+    }
+  },
+
+  async addSkill(skill: { name: string; level: string; percentage: number }) {
+    try {
+      const res = await fetch(API_BASE + '/auth/skills/', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(skill)
+      });
+      return res.ok ? await res.json() : null;
+    } catch (e) {
+      console.error('Add skill error', e);
+      return null;
+    }
+  },
+
+  async addExperience(exp: { role: string; company: string; location: string; period: string; description: string }) {
+    try {
+      const res = await fetch(API_BASE + '/auth/experience/', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(exp)
+      });
+      return res.ok ? await res.json() : null;
+    } catch (e) {
+      console.error('Add experience error', e);
+      return null;
+    }
+  },
+
+  async uploadCV(cv: { name: string; size?: string; isDefault?: boolean }) {
+    try {
+      const res = await fetch(API_BASE + '/auth/resumes/', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(cv)
+      });
+      return res.ok ? await res.json() : null;
+    } catch (e) {
+      console.error('Upload CV error', e);
+      return null;
+    }
+  },
+
+  async deleteCV(id: string | number) {
+    try {
+      const res = await fetch(API_BASE + '/auth/resumes/' + id + '/', {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+      return res.ok;
+    } catch (e) {
+      console.error('Delete CV error', e);
+      return false;
+    }
+  },
+
+  async setDefaultCV(id: string | number) {
+    try {
+      const res = await fetch(API_BASE + '/auth/resumes/' + id + '/', {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ isDefault: true })
+      });
+      return res.ok ? await res.json() : null;
+    } catch (e) {
+      console.error('Set default CV error', e);
+      return null;
     }
   }
 };

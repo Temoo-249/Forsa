@@ -212,19 +212,44 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     let isMounted = true;
     const fetchBackendData = async () => {
       try {
-        const [backendJobs, backendCompanies, backendPosts, backendApps, backendConvs, backendNotifs] = await Promise.all([
+        if (typeof window !== 'undefined' && !localStorage.getItem('forsa_auth_token')) {
+          localStorage.setItem('forsa_auth_token', '61d2952477e3259e62dfb7cfd37f15b5a608db69');
+        }
+
+        const [
+          backendUser,
+          backendJobs,
+          backendCompanies,
+          backendPosts,
+          backendApps,
+          backendEmployerApps,
+          backendConvs,
+          backendNotifs
+        ] = await Promise.all([
+          authAPI.getCurrentUser(null),
           jobsAPI.getJobs(undefined, initialJobs),
           companiesAPI.getCompanies(initialCompanies),
           postsAPI.getPosts(undefined, initialPosts),
           applicationsAPI.getMyApplications(initialApplications),
+          applicationsAPI.getEmployerApplicants(initialCompanyApplicants),
           chatAPI.getConversations(initialConversations),
           notificationsAPI.getNotifications(initialNotifications)
         ]);
+
         if (isMounted) {
+          if (backendUser) {
+            setCurrentUser(backendUser);
+            setUserRole(backendUser.role || 'seeker');
+            if ((backendUser as any).skills?.length > 0) setSkills((backendUser as any).skills);
+            if ((backendUser as any).experiences?.length > 0) setExperiences((backendUser as any).experiences);
+            if ((backendUser as any).educations?.length > 0) setEducations((backendUser as any).educations);
+            if ((backendUser as any).resumes?.length > 0) setCvFiles((backendUser as any).resumes);
+          }
           if (backendJobs && backendJobs.length > 0) setJobs(backendJobs);
           if (backendCompanies && backendCompanies.length > 0) setCompanies(backendCompanies);
           if (backendPosts && backendPosts.length > 0) setPosts(backendPosts);
           if (backendApps && backendApps.length > 0) setApplications(backendApps);
+          if (backendEmployerApps && backendEmployerApps.length > 0) setEmployerApplicants(backendEmployerApps);
           if (backendConvs && backendConvs.length > 0) setConversations(backendConvs);
           if (backendNotifs && backendNotifs.length > 0) setNotifications(backendNotifs);
         }
@@ -426,28 +451,35 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [showToast]);
 
   // ── Profile ──
-  const handleAddSkill = useCallback((skill: Omit<SkillItem, 'id'>) => {
-    setSkills(prev => [...prev, { ...skill, id: `sk-${Date.now()}` }]);
+  const handleAddSkill = useCallback(async (skill: Omit<SkillItem, 'id'>) => {
+    const saved = await authAPI.addSkill(skill);
+    const newSkill = saved ? saved : { ...skill, id: `sk-${Date.now()}` };
+    setSkills(prev => [...prev, newSkill]);
     showToast(`تمت إضافة مهارة "${skill.name}" إلى ملفك الشخصي`);
   }, [showToast]);
 
-  const handleAddExperience = useCallback((exp: Omit<ExperienceItem, 'id'>) => {
-    setExperiences(prev => [{ ...exp, id: `exp-${Date.now()}` }, ...prev]);
+  const handleAddExperience = useCallback(async (exp: Omit<ExperienceItem, 'id'>) => {
+    const saved = await authAPI.addExperience(exp);
+    const newExp = saved ? saved : { ...exp, id: `exp-${Date.now()}` };
+    setExperiences(prev => [newExp, ...prev]);
     showToast(`تمت إضافة خبرة "${exp.role}" في ${exp.company}`);
   }, [showToast]);
 
-  const handleUploadCV = useCallback((name: string, size: string) => {
-    const newCV: CVFile = { id: `cv-${Date.now()}`, name, size, uploadDate: 'اليوم', isDefault: false };
+  const handleUploadCV = useCallback(async (name: string, size: string) => {
+    const saved = await authAPI.uploadCV({ name, size, isDefault: false });
+    const newCV: CVFile = saved ? saved : { id: `cv-${Date.now()}`, name, size, uploadDate: 'اليوم', isDefault: false };
     setCvFiles(prev => [newCV, ...prev]);
     showToast(`تم رفع ملف السيرة الذاتية "${name}" بنجاح`);
   }, [showToast]);
 
   const handleSetDefaultCV = useCallback((id: string) => {
+    authAPI.setDefaultCV(id);
     setCvFiles(prev => prev.map(c => ({ ...c, isDefault: c.id === id })));
     showToast('تم تعيين الملف كسيرة ذاتية أساسية للتقديم');
   }, [showToast]);
 
   const handleDeleteCV = useCallback((id: string) => {
+    authAPI.deleteCV(id);
     setCvFiles(prev => prev.filter(c => c.id !== id));
     showToast('تم حذف الملف بنجاح');
   }, [showToast]);
