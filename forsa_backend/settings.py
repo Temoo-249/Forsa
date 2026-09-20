@@ -21,6 +21,10 @@ ALLOWED_HOSTS = [ host.strip()
         "127.0.0.1,localhost"
     ).split(",")
     if host.strip()]
+    
+CSRF_TRUSTED_ORIGINS = [
+    "https://believable-commitment-production-ed28.up.railway.app"
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -119,7 +123,9 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS Settings (Allow all origins during development and frontend integration)
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    "https://believable-commitment-production-ed28.up.railway.app",  # حط دومين الفرونت بتاعك هنا
+]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
     '*',
