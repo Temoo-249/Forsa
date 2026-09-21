@@ -168,6 +168,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   alert('لا توجد سيرة ذاتية محفوظة. قم برفع ملف أولاً.');
                    }
                 }}
+                 className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-bold transition-colors border border-slate-200"
               >
                 <Download className="w-4 h-4 text-blue-600" />
                 <span>تحميل السيرة الذاتية</span>
