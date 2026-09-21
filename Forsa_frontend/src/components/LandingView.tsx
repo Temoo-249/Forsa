@@ -10,10 +10,7 @@ import {
   Award, 
   ArrowLeft, 
   CheckCircle2, 
-  Search, 
-  Send, 
   ShieldCheck, 
-  Star,
   Sparkles,
   Laptop,
   PieChart,
@@ -39,38 +36,14 @@ export const LandingView: React.FC<LandingViewProps> = ({
   onSelectJobForApply
 }) => {
   const categories = [
-    { title: 'تقنية المعلومات', count: '1,240 وظيفة', icon: Laptop, color: 'text-blue-600 bg-blue-50' },
-    { title: 'المالية والمحاسبة', count: '850 وظيفة', icon: PieChart, color: 'text-indigo-600 bg-indigo-50' },
-    { title: 'التصميم والإبداع', count: '620 وظيفة', icon: Palette, color: 'text-sky-600 bg-sky-50' },
-    { title: 'التسويق والمبيعات', count: '1,500 وظيفة', icon: Megaphone, color: 'text-amber-600 bg-amber-50' },
-    { title: 'الهندسة والإنشاءات', count: '930 وظيفة', icon: Wrench, color: 'text-slate-700 bg-slate-100' },
-    { title: 'الطب والرعاية الصحية', count: '410 وظيفة', icon: Stethoscope, color: 'text-emerald-600 bg-emerald-50' },
-    { title: 'التعليم والتدريب', count: '780 وظيفة', icon: BookOpen, color: 'text-purple-600 bg-purple-50' },
-    { title: 'خدمة العملاء', count: '1,100 وظيفة', icon: Headphones, color: 'text-rose-600 bg-rose-50' },
-  ];
-
-  const testimonials = [
-    {
-      name: 'أحمد الرشيد',
-      role: 'مهندس برمجيات واجهات',
-      avatar: 'أر',
-      avatarBg: 'bg-blue-600',
-      comment: 'منصة فرصة غيرت أسلوب بحثي عن عمل بالكامل. تمكنت من إجراء المقابلات واستلام عرض وظيفي رسمي عبر المنصة في أقل من أسبوعين.'
-    },
-    {
-      name: 'سارة المحمد',
-      role: 'مديرة استقطاب المواهب',
-      avatar: 'سم',
-      avatarBg: 'bg-indigo-600',
-      comment: 'جودة الكفاءات التقنية والتواصل السلس مع المرشحين وتتبع مراحل التوظيف وفر علينا أكثر من 60% من وقت الفرز التقليدي.'
-    },
-    {
-      name: 'كريم علي',
-      role: 'مصمم تجربة مستخدم (UI/UX)',
-      avatar: 'كع',
-      avatarBg: 'bg-sky-600',
-      comment: 'تصميم المنصة باللونين الأبيض والأزرق مريح جداً للعين، ونظام تتبع الطلبات مع التحديثات المباشرة يمنحك ثقة واطمئنان كامل.'
-    }
+    { title: 'تقنية المعلومات', count: 'تصفح الفرص', icon: Laptop, color: 'text-blue-600 bg-blue-50' },
+    { title: 'المالية والمحاسبة', count: 'تصفح الفرص', icon: PieChart, color: 'text-indigo-600 bg-indigo-50' },
+    { title: 'التصميم والإبداع', count: 'تصفح الفرص', icon: Palette, color: 'text-sky-600 bg-sky-50' },
+    { title: 'التسويق والمبيعات', count: 'تصفح الفرص', icon: Megaphone, color: 'text-amber-600 bg-amber-50' },
+    { title: 'الهندسة والإنشاءات', count: 'تصفح الفرص', icon: Wrench, color: 'text-slate-700 bg-slate-100' },
+    { title: 'الطب والرعاية الصحية', count: 'تصفح الفرص', icon: Stethoscope, color: 'text-emerald-600 bg-emerald-50' },
+    { title: 'التعليم والتدريب', count: 'تصفح الفرص', icon: BookOpen, color: 'text-purple-600 bg-purple-50' },
+    { title: 'خدمة العملاء', count: 'تصفح الفرص', icon: Headphones, color: 'text-rose-600 bg-rose-50' },
   ];
 
   return (
@@ -122,7 +95,6 @@ export const LandingView: React.FC<LandingViewProps> = ({
       {/* Hero Section */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-blue-50/80 via-white to-white border border-blue-100/80 p-8 sm:p-14 text-center shadow-xs">
         
-        {/* Subtle Decorative Elements */}
         <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-indigo-200/20 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -187,15 +159,15 @@ export const LandingView: React.FC<LandingViewProps> = ({
           <div className="flex flex-wrap items-center justify-center gap-y-2 gap-x-6 text-xs font-bold text-slate-500 pt-4">
             <span className="flex items-center gap-1.5 text-slate-700">
               <span className="w-2 h-2 rounded-full bg-blue-600"></span>
-              +50,000 وظيفة معتمدة
+              وظائف موثوقة من شركات حقيقية
             </span>
             <span className="flex items-center gap-1.5 text-slate-700">
               <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
-              +10,000 شركة توظف
+              شركات موثقة تنشر شواغرها
             </span>
             <span className="flex items-center gap-1.5 text-slate-700">
               <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
-              95% نسبة قبول ومطابقة
+              تجربة توظيف شفافة وموثوقة
             </span>
           </div>
 
@@ -205,10 +177,10 @@ export const LandingView: React.FC<LandingViewProps> = ({
       {/* Stats Cards Row */}
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'وظيفة شاغرة متاحة', val: '50,000+', icon: Briefcase, color: 'text-blue-600' },
-          { label: 'شركة موثقة توظف', val: '10,000+', icon: Building2, color: 'text-indigo-600' },
-          { label: 'كفاءة وباحث عن عمل', val: '200,000+', icon: Users, color: 'text-sky-600' },
-          { label: 'نسبة نجاح التوظيف', val: '95%', icon: Award, color: 'text-emerald-600' },
+          { label: 'وظيفة شاغرة متاحة', val: '—', icon: Briefcase, color: 'text-blue-600' },
+          { label: 'شركة موثقة توظف', val: '—', icon: Building2, color: 'text-indigo-600' },
+          { label: 'كفاءة وباحث عن عمل', val: '—', icon: Users, color: 'text-sky-600' },
+          { label: 'نسبة نجاح التوظيف', val: '—', icon: Award, color: 'text-emerald-600' },
         ].map((stat, idx) => (
           <div
             key={idx}
@@ -232,7 +204,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
             تصفح الوظائف حسب التخصص
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 font-medium">
-            اختر مجالك المهني واستكشف مئات الفرص المحدثة يومياً بأعلى الرواتب والمزايا.
+            اختر مجالك المهني واستكشف الفرص المحدثة بأعلى الرواتب والمزايا.
           </p>
         </div>
 
@@ -355,7 +327,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
             <h2 className="text-2xl font-black text-slate-900 tracking-tight">
               وظائف مميزة وموصى بها
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500">أحدث الفرص الوظيفية المنشورة اليوم</p>
+            <p className="text-xs sm:text-sm text-slate-500">أحدث الفرص الوظيفية المنشورة</p>
           </div>
 
           <button
@@ -367,88 +339,63 @@ export const LandingView: React.FC<LandingViewProps> = ({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {featuredJobs.slice(0, 3).map((job) => (
-            <div
-              key={job.id}
-              className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:border-blue-300 hover:shadow-md transition-all flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-2xl shrink-0">
-                    {job.logo}
-                  </div>
-                  <div>
-                    <h4 
-                      onClick={() => onSelectJobForDetail(job)}
-                      className="font-bold text-sm text-slate-900 hover:text-blue-600 cursor-pointer line-clamp-1"
-                    >
-                      {job.title}
-                    </h4>
-                    <span className="text-[11px] text-slate-500 font-medium">{job.company} • {job.location}</span>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-1.5 my-3">
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700">
-                    {job.type}
-                  </span>
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700">
-                    {job.salary}
-                  </span>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between mt-2">
-                <button
-                  onClick={() => onSelectJobForDetail(job)}
-                  className="text-xs font-semibold text-slate-600 hover:text-blue-600"
-                >
-                  التفاصيل
-                </button>
-                <button
-                  onClick={() => onSelectJobForApply(job)}
-                  className="px-3 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors shadow-xs"
-                >
-                  تقدم الآن
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="space-y-6">
-        <div className="text-center space-y-1">
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">ماذا يقول أعضاء فرصة؟</h2>
-          <p className="text-xs text-slate-500">تجارب حقيقية من باحثين عن عمل ومسؤولي توظيف</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {testimonials.map((t, idx) => (
-            <div
-              key={idx}
-              className="p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-4 flex flex-col justify-between"
-            >
-              <div className="flex items-center gap-1 text-amber-400 text-sm">
-                ★★★★★
-              </div>
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed italic">
-                "{t.comment}"
-              </p>
-              <div className="flex items-center gap-3 pt-2 border-t border-slate-100">
-                <div className={`w-10 h-10 rounded-full ${t.avatarBg} text-white font-bold text-xs flex items-center justify-center shrink-0`}>
-                  {t.avatar}
-                </div>
+        {featuredJobs.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {featuredJobs.slice(0, 3).map((job) => (
+              <div
+                key={job.id}
+                className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:border-blue-300 hover:shadow-md transition-all flex flex-col justify-between"
+              >
                 <div>
-                  <h4 className="font-bold text-xs text-slate-900">{t.name}</h4>
-                  <span className="text-[11px] text-slate-400">{t.role}</span>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-2xl shrink-0">
+                      {job.logo}
+                    </div>
+                    <div>
+                      <h4 
+                        onClick={() => onSelectJobForDetail(job)}
+                        className="font-bold text-sm text-slate-900 hover:text-blue-600 cursor-pointer line-clamp-1"
+                      >
+                        {job.title}
+                      </h4>
+                      <span className="text-[11px] text-slate-500 font-medium">{job.company} • {job.location}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5 my-3">
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700">
+                      {job.type}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700">
+                      {job.salary}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between mt-2">
+                  <button
+                    onClick={() => onSelectJobForDetail(job)}
+                    className="text-xs font-semibold text-slate-600 hover:text-blue-600"
+                  >
+                    التفاصيل
+                  </button>
+                  <button
+                    onClick={() => onSelectJobForApply(job)}
+                    className="px-3 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors shadow-xs"
+                  >
+                    تقدم الآن
+                  </button>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center p-10 bg-white rounded-3xl border border-dashed border-slate-300">
+            <p className="text-sm text-slate-500 font-medium">
+              لا توجد وظائف منشورة حالياً. عد قريباً لاستكشاف الفرص الجديدة.
+            </p>
+          </div>
+        )}
       </section>
 
       {/* Bottom CTA Banner */}
@@ -457,7 +404,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
           جاهز لبدء مرحلتك المهنية القادمة؟
         </h2>
         <p className="text-xs sm:text-base text-blue-100 max-w-xl mx-auto">
-          انضم مجاناً إلى آلاف المحترفين والشركات في منصة فرصة وابدأ التقديم أو التوظيف اليوم.
+          انضم مجاناً إلى المحترفين والشركات في منصة فرصة وابدأ التقديم أو التوظيف اليوم.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
           <button
