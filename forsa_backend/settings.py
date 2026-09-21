@@ -1,31 +1,35 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-import os
 import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR / '.env')
 
+# ─── Security ─────────────────────────────────────────────
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-forsa-platform-2026-secret-key-xyz')
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
 
-
-ALLOWED_HOSTS = [ host.strip()
+ALLOWED_HOSTS = [
+    host.strip()
     for host in os.environ.get(
         "ALLOWED_HOSTS",
         "127.0.0.1,localhost"
     ).split(",")
-    if host.strip()]
-    
-CSRF_TRUSTED_ORIGINS = [
-    "https://believable-commitment-production-ed28.up.railway.app"
+    if host.strip()
 ]
 
+# ─── CSRF Trusted Origins (الدومينات المسموحة) ────────────
+CSRF_TRUSTED_ORIGINS = [
+    "https://believable-commitment-production-ed28.up.railway.app",
+    "https://forsa-eight.vercel.app",
+]
+
+# ─── Applications ─────────────────────────────────────────
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -50,6 +54,7 @@ INSTALLED_APPS = [
 
 AUTH_USER_MODEL = 'accounts.User'
 
+# ─── Middleware ───────────────────────────────────────────
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -64,6 +69,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'forsa_backend.urls'
 
+# ─── Templates ────────────────────────────────────────────
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -82,6 +88,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'forsa_backend.wsgi.application'
 
+# ─── Database ─────────────────────────────────────────────
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -92,6 +99,7 @@ DATABASES = {
         'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
+
 if os.environ.get("DATABASE_URL"):
     DATABASES["default"] = dj_database_url.parse(
         os.environ["DATABASE_URL"],
@@ -99,6 +107,7 @@ if os.environ.get("DATABASE_URL"):
         ssl_require=True,
     )
 
+# ─── Password Validation ──────────────────────────────────
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -108,11 +117,13 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# ─── Internationalization ─────────────────────────────────
 LANGUAGE_CODE = 'ar'
 TIME_ZONE = 'Asia/Riyadh'
 USE_I18N = True
 USE_TZ = True
 
+# ─── Static & Media Files ─────────────────────────────────
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static'] if (BASE_DIR / 'static').exists() else []
@@ -122,8 +133,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# CORS Settings (Allow all origins during development and frontend integration)
-# شيل CORS_ALLOW_ALL_ORIGINS = True
+# ─── CORS Settings ────────────────────────────────────────
 CORS_ALLOWED_ORIGINS = [
     "https://forsa-eight.vercel.app",
     "https://forsa-eight-git-main.vercel.app",
@@ -131,12 +141,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 CORS_ALLOW_CREDENTIALS = True
 
-# ضيف CSRF trusted origins عشان الأدمن
-CSRF_TRUSTED_ORIGINS = [
-    "https://believable-commitment-production-ed28.up.railway.app",
-    "https://forsa-eight.vercel.app",
-]
-
+# ─── REST Framework ───────────────────────────────────────
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
@@ -145,8 +150,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],
-    # ✅ الضيف الجديد - throttle rates
     'DEFAULT_THROTTLE_RATES': {
-        'auth': '20/minute',  # 20 محاولة في الدقيقة لكل IP
+        'auth': '20/minute',  # 20 محاولة دخول/تسجيل في الدقيقة لكل IP
     },
 }
