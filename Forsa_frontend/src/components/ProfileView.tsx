@@ -56,11 +56,18 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const [activeTab, setActiveTab] = useState<'about' | 'skills' | 'experience' | 'education' | 'cv'>('about');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   
-  const userName = currentUser?.name || 'أحمد الرشيد';
+  const userName = currentUser?.name || 'مستخدم جديد';
   const userInitials = currentUser?.avatar || userName.slice(0, 2);
-  const userHeadline = currentUser?.headline || 'Senior Full Stack Developer متخصص في معمارية تطبيقات الويب باستخدام React, TypeScript و Node.js.';
-  const userEmail = currentUser?.email || 'ahmed.rashid.dev@example.com';
-  
+  const userHeadline = currentUser?.headline || 'أكمل ملفك الشخصي بإضافة مسمى وظيفي';
+  const userEmail = currentUser?.email || '';
+  const userBio = (currentUser as any)?.bio || '';
+  const userLocation = (currentUser as any)?.location || '';
+  const userPhone = (currentUser as any)?.phone || '';
+  const userLinkedin = (currentUser as any)?.linkedin || '';
+  const userPortfolio = (currentUser as any)?.portfolio || '';
+  const hasSocialLinks = userEmail || userPhone || userLinkedin || userPortfolio;
+
+
   // Modals for adding skill or exp
   const [showSkillModal, setShowSkillModal] = useState(false);
   const [newSkillName, setNewSkillName] = useState('');
@@ -91,7 +98,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     onAddExperience({
       role: newExpRole.trim(),
       company: newExpCompany.trim(),
-      location: 'القاهرة، مصر',
+      location:userLocation || '',
       period: newExpPeriod,
       description: newExpDesc.trim() || 'تطوير حلول برمجية وقيادة ميزات المنتجات الرقمية.'
     });
@@ -153,8 +160,14 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
             <div className="flex flex-wrap items-center gap-2.5">
               <button
-                onClick={() => alert('جاري تنزيل السيرة الذاتية الأساسية')}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-bold transition-colors border border-slate-200"
+                onClick={() => {
+                  const defaultCV = cvFiles.find(f => f.isDefault);
+                  if (defaultCV) {
+                    alert(`جاري تنزيل ${defaultCV.name}`);
+                  } else {
+                  alert('لا توجد سيرة ذاتية محفوظة. قم برفع ملف أولاً.');
+                   }
+                }}
               >
                 <Download className="w-4 h-4 text-blue-600" />
                 <span>تحميل السيرة الذاتية</span>
@@ -223,9 +236,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 <CheckCircle2 className="w-3 h-3" />
                 متاح لفرص العمل فوراً
               </span>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100">
-                Senior Developer
-              </span>
             </div>
 
             <p className="text-xs sm:text-base text-slate-600 font-medium max-w-2xl">
@@ -233,42 +243,46 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             </p>
 
             <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 pt-1 font-medium">
-              <span className="flex items-center gap-1">
-                <MapPin className="w-4 h-4 text-slate-400" />
-                الرياض، المملكة العربية السعودية (منفتح للعمل عن بُعد)
-              </span>
-              <span>•</span>
-              <span className="flex items-center gap-1">
-                <Mail className="w-4 h-4 text-slate-400" />
-                {userEmail}
-              </span>
+                {userLocation && (
+                 <>
+                   <span className="flex items-center gap-1">
+                    <MapPin className="w-4 h-4 text-slate-400" />
+                     {userLocation}
+                   </span>
+                   {userEmail && <span>•</span>}
+                 </>
+                )}
+                {userEmail && (
+                 <span className="flex items-center gap-1">
+                  <Mail className="w-4 h-4 text-slate-400" />
+                  {userEmail}
+                </span>
+              )}
             </div>
           </div>
 
           {/* Key Stats Bar */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 mt-6 border-t border-slate-100">
             <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 text-center">
-              <span className="text-lg sm:text-xl font-black text-blue-700 block">12</span>
-              <span className="text-xs text-slate-400 font-semibold">طلبات وظيفية</span>
+             <span className="text-lg sm:text-xl font-black text-blue-700 block">—</span>
+             <span className="text-xs text-slate-400 font-semibold">طلبات وظيفية</span>
             </div>
-
             <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 text-center">
-              <span className="text-lg sm:text-xl font-black text-slate-900 block">8</span>
+              <span className="text-lg sm:text-xl font-black text-slate-900 block">—</span>
               <span className="text-xs text-slate-400 font-semibold">منشورات ومقالات</span>
             </div>
-
             <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 text-center">
-              <span className="text-lg sm:text-xl font-black text-slate-900 block">847</span>
+              <span className="text-lg sm:text-xl font-black text-slate-900 block">—</span>
               <span className="text-xs text-slate-400 font-semibold">مشاهدات للملف</span>
             </div>
-
             <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 text-center">
-              <span className="text-lg sm:text-xl font-black text-slate-900 block">234</span>
+              <span className="text-lg sm:text-xl font-black text-slate-900 block">—</span>
               <span className="text-xs text-slate-400 font-semibold">متابع مهني</span>
             </div>
           </div>
-
         </div>
+
+        
 
         {/* Profile Tabs Navigation */}
         <div className="flex items-center gap-2 px-6 sm:px-10 border-t border-slate-200/80 overflow-x-auto bg-slate-50/50">
@@ -303,50 +317,67 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           <div className="space-y-6">
             <div className="space-y-3">
               <h3 className="text-base font-bold text-slate-900">المقدمة المهنية والنبذة</h3>
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                مهندس برمجيات وواجهات تفاعلية بخبرة تزيد عن 5 سنوات في بناء وتصميم منصات الويب الحديثة وحلول الـ SaaS القابلة للتوسع. أمتلك شغفاً عميقاً بكتابة كود نظيف وسهل الصيانة، وبناء تجارب استخدام بديهية وسريعة للغاية ترتكز على أفضل معايير الأداء والوضوح البصري.
-              </p>
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                قمت بقيادة وتطوير مشاريع تقنية شملت نظم إدارة المحتوى، لوحات التحكم التفاعلية، وبوابات الدفع الإلكتروني، مع اهتمام فائق بتصميم واجهات أبيض وأزرق سلسة تناسب احتياجات السوق العربي والعالمي.
-              </p>
+              {userBio ? (
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+                  {userBio}
+                </p>
+              ) : (
+                <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+                  لم تتم إضافة نبذة تعريفية بعد. اضغط على "تعديل الملف" لإضافة نبذة عنك.
+                </p>
+              )}
             </div>
 
             <div className="pt-4 border-t border-slate-100 space-y-3">
               <h3 className="text-sm font-bold text-slate-900">وسائل التواصل والروابط المباشرة</h3>
-              <div className="flex flex-wrap gap-2.5">
-                <a
-                  href="mailto:ahmed.rashid.dev@example.com"
-                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
-                >
-                  <Mail className="w-4 h-4 text-blue-600" />
-                  <span>ahmed.rashid.dev@example.com</span>
-                </a>
-                <a
-                  href="tel:+201000000000"
-                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
-                >
-                  <Phone className="w-4 h-4 text-blue-600" />
-                  <span dir="ltr">+20 100 000 0000</span>
-                </a>
-                <a
-                  href="https://linkedin.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
-                >
-                  <Linkedin className="w-4 h-4 text-blue-700" />
-                  <span>LinkedIn Profile</span>
-                </a>
-                <a
-                  href="https://portfolio.dev"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
-                >
-                  <Globe className="w-4 h-4 text-blue-600" />
-                  <span>معرض الأعمال (Portfolio)</span>
-                </a>
-              </div>
+              {hasSocialLinks ? (
+                <div className="flex flex-wrap gap-2.5">
+                  {userEmail && (
+                    <a
+                      href={`mailto:${userEmail}`}
+                      className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
+                    >
+                      <Mail className="w-4 h-4 text-blue-600" />
+                      <span>{userEmail}</span>
+                    </a>
+                  )}
+                  {userPhone && (
+                    <a
+                      href={`tel:${userPhone}`}
+                      className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
+                    >
+                      <Phone className="w-4 h-4 text-blue-600" />
+                      <span dir="ltr">{userPhone}</span>
+                    </a>
+                  )}
+                  {userLinkedin && (
+                    <a
+                      href={userLinkedin}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
+                    >
+                      <Linkedin className="w-4 h-4 text-blue-700" />
+                      <span>LinkedIn Profile</span>
+                    </a>
+                  )}
+                  {userPortfolio && (
+                    <a
+                      href={userPortfolio}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
+                    >
+                      <Globe className="w-4 h-4 text-blue-600" />
+                      <span>معرض الأعمال (Portfolio)</span>
+                    </a>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400">
+                  لم تتم إضافة أي وسائل تواصل بعد.
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -368,31 +399,37 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {skills.map((s) => (
-                <div
-                  key={s.id}
-                  className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs sm:text-sm text-slate-900">{s.name}</span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-700">
-                      {s.level}
-                    </span>
+            {skills.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {skills.map((s) => (
+                  <div
+                    key={s.id}
+                    className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-xs sm:text-sm text-slate-900">{s.name}</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-700">
+                        {s.level}
+                      </span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full transition-all duration-500"
+                        style={{ width: `${s.percentage}%` }}
+                      ></div>
+                    </div>
+                    <div className="flex justify-between text-[11px] text-slate-400 font-medium">
+                      <span>معدل الإتقان</span>
+                      <span>{s.percentage}%</span>
+                    </div>
                   </div>
-                  <div className="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full transition-all duration-500"
-                      style={{ width: `${s.percentage}%` }}
-                    ></div>
-                  </div>
-                  <div className="flex justify-between text-[11px] text-slate-400 font-medium">
-                    <span>معدل الإتقان</span>
-                    <span>{s.percentage}%</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 text-center py-8">
+                لا توجد مهارات مضافة بعد. اضغط على "إضافة مهارة جديدة" للبدء.
+              </p>
+            )}
           </div>
         )}
 
@@ -413,29 +450,35 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               </button>
             </div>
 
-            <div className="relative pr-6 border-r-2 border-slate-200 space-y-8 mr-2">
-              {experiences.map((exp) => (
-                <div key={exp.id} className="relative">
-                  <span className="absolute -right-[31px] top-1.5 w-4 h-4 rounded-full bg-blue-600 ring-4 ring-white"></span>
-                  <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200/80 space-y-2">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                      <h4 className="font-bold text-sm text-slate-900">{exp.role}</h4>
-                      <span className="text-xs font-bold text-blue-700 bg-blue-100/70 px-2.5 py-0.5 rounded-md self-start">
-                        {exp.period}
-                      </span>
+            {experiences.length > 0 ? (
+              <div className="relative pr-6 border-r-2 border-slate-200 space-y-8 mr-2">
+                {experiences.map((exp) => (
+                  <div key={exp.id} className="relative">
+                    <span className="absolute -right-[31px] top-1.5 w-4 h-4 rounded-full bg-blue-600 ring-4 ring-white"></span>
+                    <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200/80 space-y-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                        <h4 className="font-bold text-sm text-slate-900">{exp.role}</h4>
+                        <span className="text-xs font-bold text-blue-700 bg-blue-100/70 px-2.5 py-0.5 rounded-md self-start">
+                          {exp.period}
+                        </span>
+                      </div>
+                      <div className="text-xs text-slate-500 font-semibold flex items-center gap-2">
+                        <span className="text-slate-800">{exp.company}</span>
+                        <span>•</span>
+                        <span>{exp.location}</span>
+                      </div>
+                      <p className="text-xs text-slate-600 leading-relaxed pt-1">
+                        {exp.description}
+                      </p>
                     </div>
-                    <div className="text-xs text-slate-500 font-semibold flex items-center gap-2">
-                      <span className="text-slate-800">{exp.company}</span>
-                      <span>•</span>
-                      <span>{exp.location}</span>
-                    </div>
-                    <p className="text-xs text-slate-600 leading-relaxed pt-1">
-                      {exp.description}
-                    </p>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 text-center py-8">
+                لا توجد خبرات مضافة بعد. اضغط على "إضافة خبرة" للبدء.
+              </p>
+            )}
           </div>
         )}
 
@@ -447,24 +490,30 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               <p className="text-xs text-slate-500">الدرجات العلمية والشهادات الاحترافية</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {educations.map((edu) => (
-                <div
-                  key={edu.id}
-                  className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
-                    <GraduationCap className="w-5 h-5" />
+            {educations.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {educations.map((edu) => (
+                  <div
+                    key={edu.id}
+                    className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
+                      <GraduationCap className="w-5 h-5" />
+                    </div>
+                    <h4 className="font-bold text-sm text-slate-900 leading-snug">{edu.degree}</h4>
+                    <div className="text-xs font-semibold text-slate-600 flex items-center justify-between">
+                      <span>{edu.institution}</span>
+                      <span className="text-blue-600 font-bold">{edu.period}</span>
+                    </div>
+                    <p className="text-xs text-slate-500 leading-relaxed">{edu.description}</p>
                   </div>
-                  <h4 className="font-bold text-sm text-slate-900 leading-snug">{edu.degree}</h4>
-                  <div className="text-xs font-semibold text-slate-600 flex items-center justify-between">
-                    <span>{edu.institution}</span>
-                    <span className="text-blue-600 font-bold">{edu.period}</span>
-                  </div>
-                  <p className="text-xs text-slate-500 leading-relaxed">{edu.description}</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 text-center py-8">
+                لا توجد مؤهلات دراسية مضافة بعد.
+              </p>
+            )}
           </div>
         )}
 
@@ -498,56 +547,62 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             {/* CV Files List */}
             <div className="space-y-3">
               <span className="text-xs font-bold text-slate-700 block">الملفات المرفوعة حالياً</span>
-              {cvFiles.map((file) => (
-                <div
-                  key={file.id}
-                  className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold text-xs shrink-0">
-                      PDF
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h5 className="font-bold text-xs sm:text-sm text-slate-900">{file.name}</h5>
-                        {file.isDefault && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">
-                            الملف الأساسي
-                          </span>
-                        )}
+              {cvFiles.length > 0 ? (
+                cvFiles.map((file) => (
+                  <div
+                    key={file.id}
+                    className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold text-xs shrink-0">
+                        PDF
                       </div>
-                      <span className="text-[11px] text-slate-400">
-                        {file.size} • أضيف في {file.uploadDate}
-                      </span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h5 className="font-bold text-xs sm:text-sm text-slate-900">{file.name}</h5>
+                          {file.isDefault && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">
+                              الملف الأساسي
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[11px] text-slate-400">
+                          {file.size} • أضيف في {file.uploadDate}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {!file.isDefault && (
+                        <button
+                          onClick={() => onSetDefaultCV(file.id)}
+                          className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-xs font-semibold text-slate-700"
+                        >
+                          تعيين كأساسي
+                        </button>
+                      )}
+                      <button
+                        onClick={() => alert(`جاري تنزيل ${file.name}`)}
+                        className="p-2 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-blue-600"
+                        title="تنزيل"
+                      >
+                        <Download className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => onDeleteCV(file.id)}
+                        className="p-2 rounded-lg bg-white border border-slate-200 text-rose-500 hover:bg-rose-50"
+                        title="حذف"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-2">
-                    {!file.isDefault && (
-                      <button
-                        onClick={() => onSetDefaultCV(file.id)}
-                        className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-xs font-semibold text-slate-700"
-                      >
-                        تعيين كأساسي
-                      </button>
-                    )}
-                    <button
-                      onClick={() => alert(`جاري تنزيل ${file.name}`)}
-                      className="p-2 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-blue-600"
-                      title="تنزيل"
-                    >
-                      <Download className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => onDeleteCV(file.id)}
-                      className="p-2 rounded-lg bg-white border border-slate-200 text-rose-500 hover:bg-rose-50"
-                      title="حذف"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-xs text-slate-400 text-center py-6">
+                  لم يتم رفع أي ملفات بعد.
+                </p>
+              )}
             </div>
           </div>
         )}

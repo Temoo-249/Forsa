@@ -71,24 +71,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotSent, setForgotSent] = useState(false);
 
-  // Quick fill demo user
-  const handleQuickDemo = (type: 'seeker' | 'employer') => {
-    if (type === 'seeker') {
-      setEmail('ahmed.rashid.dev@example.com');
-      setPassword('••••••••123');
-      setName('أحمد الرشيد');
-      setHeadline('Senior Full Stack Developer');
-      setRole('seeker');
-    } else {
-      setEmail('recruitment@techvision.corp');
-      setPassword('••••••••123');
-      setName('سارة القحطاني');
-      setCompanyName('TechVision Corp');
-      setHeadline('مديرة استقطاب المواهب التقنية');
-      setRole('employer');
-    }
-    setErrorMsg('');
-  };
+  
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -306,30 +289,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             </div>
           </div>
 
-          {/* Quick Demo Fill Buttons */}
-          <div className="mb-5 p-3 rounded-2xl bg-blue-50/50 border border-blue-100/80 flex flex-wrap items-center justify-between gap-2">
-            <span className="text-xs font-bold text-blue-900 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-              تجربة فورية وسريعة:
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('seeker')}
-                className="px-2.5 py-1 rounded-lg bg-white hover:bg-blue-50 text-blue-700 text-[11px] font-bold border border-blue-200 transition-colors shadow-2xs"
-              >
-                دخول كباحث (أحمد)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('employer')}
-                className="px-2.5 py-1 rounded-lg bg-white hover:bg-blue-50 text-blue-700 text-[11px] font-bold border border-blue-200 transition-colors shadow-2xs"
-              >
-                دخول كشركة (TechVision)
-              </button>
-            </div>
-          </div>
-
+           
           {/* Messages */}
           {errorMsg && (
             <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2 animate-in fade-in-50">
@@ -513,23 +473,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  setName('أحمد الرشيد');
-                  setEmail('ahmed.google@gmail.com');
-                  setRole('seeker');
-                  setSuccessMsg('تم التحقق بنجاح من حساب Google!');
-                  setTimeout(() => {
-                    onLoginSuccess({
-                      id: `user-google-${Date.now()}`,
-                      name: 'أحمد الرشيد',
-                      email: 'ahmed.google@gmail.com',
-                      role: 'seeker',
-                      headline: 'Senior Full Stack Developer',
-                      avatar: 'أر',
-                      isLoggedIn: true
-                    });
-                    if (isModal && onCloseModal) onCloseModal();
-                  }, 600);
-                }}
+                        alert('تسجيل الدخول عبر Google سيتوفر قريباً');
+                 }} 
                 className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition-colors"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -544,22 +489,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  setName('أحمد الرشيد');
-                  setEmail('ahmed.linkedin@example.com');
-                  setRole('seeker');
-                  setSuccessMsg('تم التحقق بنجاح من حساب LinkedIn!');
-                  setTimeout(() => {
-                    onLoginSuccess({
-                      id: `user-linkedin-${Date.now()}`,
-                      name: 'أحمد الرشيد',
-                      email: 'ahmed.linkedin@example.com',
-                      role: 'seeker',
-                      headline: 'Senior Full Stack Developer',
-                      avatar: 'أر',
-                      isLoggedIn: true
-                    });
-                    if (isModal && onCloseModal) onCloseModal();
-                  }, 600);
+                  alert('تسجيل الدخول عبر LinkedIn سيتوفر قريباً');
                 }}
                 className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition-colors"
               >
