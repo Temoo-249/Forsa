@@ -9,7 +9,7 @@ import {
   AuthUser
 } from '../types';
 
-const API_BASE = (typeof window !== 'undefined' && (window as any).__FORSA_API_BASE__) || 'http://127.0.0.1:8000/api';
+ const API_BASE = (typeof window !== 'undefined' && (window as any).__FORSA_API_BASE__) || 'https://believable-commitment-production-ed28.up.railway.app/api';
 
 function getAuthHeaders() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('forsa_auth_token') : null;
