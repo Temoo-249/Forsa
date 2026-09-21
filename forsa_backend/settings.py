@@ -123,12 +123,18 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS Settings (Allow all origins during development and frontend integration)
+# شيل CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_ORIGINS = [
-    "https://believable-commitment-production-ed28.up.railway.app",  # حط دومين الفرونت بتاعك هنا
+    "https://forsa-eight.vercel.app",
+    "https://forsa-eight-git-main.vercel.app",
+    "http://localhost:3000",
 ]
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_HEADERS = [
-    '*',
+
+# ضيف CSRF trusted origins عشان الأدمن
+CSRF_TRUSTED_ORIGINS = [
+    "https://believable-commitment-production-ed28.up.railway.app",
+    "https://forsa-eight.vercel.app",
 ]
 
 REST_FRAMEWORK = {
@@ -139,4 +145,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],
+    # ✅ الضيف الجديد - throttle rates
+    'DEFAULT_THROTTLE_RATES': {
+        'auth': '20/minute',  # 20 محاولة في الدقيقة لكل IP
+    },
 }
