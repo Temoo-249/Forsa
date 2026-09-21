@@ -20,19 +20,6 @@ import {
   AuthUser
 } from '../types';
 import {
-  initialJobs,
-  initialApplications,
-  initialPosts,
-  initialConversations,
-  initialNotifications,
-  initialSkills,
-  initialExperiences,
-  initialEducations,
-  initialCVFiles,
-  initialCompanies,
-  initialCompanyApplicants
-} from '../data/mockData';
-import {
   authAPI,
   jobsAPI,
   applicationsAPI,
@@ -63,6 +50,26 @@ function pathnameToTab(pathname: string): TabType {
   if (validTabs.includes(path)) return path as TabType;
   return 'landing';
 }
+
+// ─── Empty Company Placeholder (للـ employer اللي لسه مفيش له شركة) ───
+const EMPTY_COMPANY: Company = {
+  id: '',
+  name: '',
+  tagline: '',
+  logo: '',
+  coverGradient: '',
+  industry: '',
+  location: '',
+  employeesCount: '',
+  foundedYear: '',
+  website: '',
+  description: '',
+  benefits: [],
+  rating: 0,
+  reviewsCount: 0,
+  isVerified: false,
+  openJobsCount: 0,
+};
 
 // ─── Context Type ────────────────────────────────────────────────
 interface AppContextType {
@@ -164,38 +171,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [router]);
 
-  // ── Auth State ──
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
-    if (typeof window !== 'undefined' && localStorage.getItem('forsa_logged_out') === 'true') {
-      return null;
-    }
-    return {
-      id: 'usr-1',
-      name: 'أحمد الرشيد',
-      email: 'ahmed.rashid.dev@example.com',
-      role: 'seeker',
-      avatar: 'أر',
-      headline: 'Senior Full Stack Developer متخصص في معمارية تطبيقات الويب باستخدام React, TypeScript و Node.js.',
-      isLoggedIn: true,
-    };
-  });
+  // ── Auth State (يبدأ فاضي - المستخدم لازم يسجل دخول) ──
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [userRole, setUserRole] = useState<UserRole>('seeker');
 
-  // ── Core Data ──
-  const [jobs, setJobs] = useState<Job[]>(initialJobs);
-  const [applications, setApplications] = useState<Application[]>(initialApplications);
-  const [posts, setPosts] = useState<Post[]>(initialPosts);
-  const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
-  const [notifications, setNotifications] = useState<NotificationItem[]>(initialNotifications);
-  const [skills, setSkills] = useState<SkillItem[]>(initialSkills);
-  const [experiences, setExperiences] = useState<ExperienceItem[]>(initialExperiences);
-  const [educations, setEducations] = useState<EducationItem[]>(initialEducations);
-  const [cvFiles, setCvFiles] = useState<CVFile[]>(initialCVFiles);
+  // ── Core Data (كلها بتبدأ فاضية، هتتملى من الـ API) ──
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [skills, setSkills] = useState<SkillItem[]>([]);
+  const [experiences, setExperiences] = useState<ExperienceItem[]>([]);
+  const [educations, setEducations] = useState<EducationItem[]>([]);
+  const [cvFiles, setCvFiles] = useState<CVFile[]>([]);
 
   // ── Companies & Employer ──
-  const [companies, setCompanies] = useState<Company[]>(initialCompanies);
-  const [employerApplicants, setEmployerApplicants] = useState<JobApplicant[]>(initialCompanyApplicants);
-  const [myEmployerCompany, setMyEmployerCompany] = useState<Company>(initialCompanies[0]);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [employerApplicants, setEmployerApplicants] = useState<JobApplicant[]>([]);
+  const [myEmployerCompany, setMyEmployerCompany] = useState<Company>(EMPTY_COMPANY);
 
   // ── Modals ──
   const [isPostJobModalOpen, setIsPostJobModalOpen] = useState(false);
@@ -218,12 +212,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const fetchBackendData = async () => {
       try {
         const isLoggedOut = typeof window !== 'undefined' && localStorage.getItem('forsa_logged_out') === 'true';
-        let token = typeof window !== 'undefined' ? localStorage.getItem('forsa_auth_token') : null;
+        const token = typeof window !== 'undefined' ? localStorage.getItem('forsa_auth_token') : null;
 
-        if (!isLoggedOut && !token && typeof window !== 'undefined') {
-          token = '61d2952477e3259e62dfb7cfd37f15b5a608db69';
-          localStorage.setItem('forsa_auth_token', token);
-        }
+        // لو مفيش توكن أو المستخدم مسجل خروج، متجيبش بيانات المستخدم
+        const shouldFetchUser = !isLoggedOut && !!token;
 
         const [
           backendUser,
@@ -235,17 +227,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           backendConvs,
           backendNotifs
         ] = await Promise.all([
-          (!isLoggedOut && token) ? authAPI.getCurrentUser(null) : Promise.resolve(null),
-          jobsAPI.getJobs(undefined, initialJobs),
-          companiesAPI.getCompanies(initialCompanies),
-          postsAPI.getPosts(undefined, initialPosts),
-          applicationsAPI.getMyApplications(initialApplications),
-          applicationsAPI.getEmployerApplicants(initialCompanyApplicants),
-          chatAPI.getConversations(initialConversations),
-          notificationsAPI.getNotifications(initialNotifications)
+          shouldFetchUser ? authAPI.getCurrentUser(null) : Promise.resolve(null),
+          jobsAPI.getJobs(),
+          companiesAPI.getCompanies(),
+          postsAPI.getPosts(),
+          shouldFetchUser ? applicationsAPI.getMyApplications() : Promise.resolve([]),
+          shouldFetchUser ? applicationsAPI.getEmployerApplicants() : Promise.resolve([]),
+          shouldFetchUser ? chatAPI.getConversations() : Promise.resolve([]),
+          shouldFetchUser ? notificationsAPI.getNotifications() : Promise.resolve([])
         ]);
 
         if (isMounted) {
+          // المستخدم
           if (backendUser && !isLoggedOut) {
             setCurrentUser(backendUser);
             setUserRole(backendUser.role || 'seeker');
@@ -253,19 +246,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             if ((backendUser as any).experiences?.length > 0) setExperiences((backendUser as any).experiences);
             if ((backendUser as any).educations?.length > 0) setEducations((backendUser as any).educations);
             if ((backendUser as any).resumes?.length > 0) setCvFiles((backendUser as any).resumes);
-          } else if (isLoggedOut) {
+          } else {
             setCurrentUser(null);
           }
-          if (backendJobs && backendJobs.length > 0) setJobs(backendJobs);
-          if (backendCompanies && backendCompanies.length > 0) setCompanies(backendCompanies);
-          if (backendPosts && backendPosts.length > 0) setPosts(backendPosts);
-          if (backendApps && backendApps.length > 0) setApplications(backendApps);
-          if (backendEmployerApps && backendEmployerApps.length > 0) setEmployerApplicants(backendEmployerApps);
-          if (backendConvs && backendConvs.length > 0) setConversations(backendConvs);
-          if (backendNotifs && backendNotifs.length > 0) setNotifications(backendNotifs);
+
+          // البيانات العامة (بتتحط دايمًا حتى لو فاضية)
+          setJobs(backendJobs || []);
+          setCompanies(backendCompanies || []);
+          setPosts(backendPosts || []);
+          setApplications(backendApps || []);
+          setEmployerApplicants(backendEmployerApps || []);
+          setConversations(backendConvs || []);
+          setNotifications(backendNotifs || []);
+
+          // لو المستخدم صاحب عمل وله شركة، نحطها
+          if (backendCompanies && backendCompanies.length > 0 && backendUser?.role === 'employer') {
+            setMyEmployerCompany(backendCompanies[0]);
+          }
         }
       } catch (err) {
-        console.warn('Sync with backend failed, keeping mock data:', err);
+        console.warn('Sync with backend failed:', err);
       }
     };
     fetchBackendData();
@@ -273,7 +273,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // ═══════════════════════════════════════════════════════════════
-  // HANDLERS (ported from App.tsx)
+  // HANDLERS
   // ═══════════════════════════════════════════════════════════════
 
   // ── Auth ──
