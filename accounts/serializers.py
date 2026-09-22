@@ -45,7 +45,8 @@ class UserSerializer(serializers.ModelSerializer):
         ]
 
     def get_name(self, obj):
-        return obj.get_full_name() or obj.username
+        full = obj.get_full_name()
+        return full if full.strip() else obj.username
 
     def get_isLoggedIn(self, obj):
         return True
