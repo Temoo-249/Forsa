@@ -212,11 +212,11 @@ const openEditModal = () => {
               </button>
 
               <button
-                onClick={openEditModal}
-                className="..."
-                   >
+              onClick={openEditModal}
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold transition-all shadow-xs"
+             >
                 <Edit3 className="w-4 h-4" />
-                 <span>تعديل الملف</span>
+               <span>تعديل الملف</span>
               </button>
 
               {onLogout && (
@@ -842,7 +842,7 @@ const openEditModal = () => {
               value={editPhone}
               onChange={(e) => setEditPhone(e.target.value)}
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-blue-500"
-              placeholder="+966 50 000 0000"
+              placeholder="+249 912345678" 
               dir="ltr"
             />
           </div>
@@ -853,7 +853,7 @@ const openEditModal = () => {
               value={editLocation}
               onChange={(e) => setEditLocation(e.target.value)}
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-blue-500"
-              placeholder="الرياض، السعودية"
+              placeholder="الخرطوم، السودان"
             />
           </div>
         </div>
