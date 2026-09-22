@@ -127,11 +127,14 @@ export const AuthView: React.FC<AuthViewProps> = ({
             username: email.split('@')[0] + Math.floor(Math.random() * 1000),
             email: email.trim(),
             password: password.trim(),
+            firstName: name.trim().split(' ')[0] || '',
+            lastName: name.trim().split(' ').slice(1).join(' ') || '',
             role: role,
             headline: headline.trim() || (role === 'seeker' ? 'باحث عن عمل' : 'صاحب عمل'),
             avatar: name.trim().slice(0, 2) || 'فر',
             companyName: companyName.trim()
           });
+          
           if (res) {
             authenticatedUser = {
               id: res.id,

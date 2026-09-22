@@ -49,11 +49,15 @@ class UserSerializer(serializers.ModelSerializer):
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
+    email = serializers.EmailField()
     companyName = serializers.CharField(source='company_name', required=False, allow_blank=True)
+    firstName = serializers.CharField(source='first_name', required=False, allow_blank=True)
+    lastName = serializers.CharField(source='last_name', required=False, allow_blank=True)
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'role', 'headline', 'avatar', 'companyName']
+        fields = ['username', 'email', 'password', 'role', 'headline', 'avatar', 'companyName', 'firstName', 'lastName']
+        
 
     def create(self, validated_data):
         password = validated_data.pop('password')
