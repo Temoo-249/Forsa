@@ -22,7 +22,8 @@ import {
   Share2,
   Edit3,
   LogOut,
-  Settings
+  Settings,
+  X
 } from 'lucide-react';
 import { AuthUser } from '../types';
 
@@ -213,7 +214,7 @@ const openEditModal = () => {
               <button
                 onClick={openEditModal}
                 className="..."
->
+                   >
                 <Edit3 className="w-4 h-4" />
                  <span>تعديل الملف</span>
               </button>
@@ -229,6 +230,7 @@ const openEditModal = () => {
                 </button>
               )}
             </div>
+            
           </div>
 
           {/* Logout Confirmation Dialog */}
@@ -785,7 +787,97 @@ const openEditModal = () => {
           </div>
         </div>
       )}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-5 my-8">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-black text-slate-900">تعديل الملف الشخصي</h3>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
+      <form onSubmit={handleSaveProfile} className="space-y-4">
+        <div>
+          <label className="text-xs font-bold text-slate-700 block mb-1">الاسم الكامل</label>
+          <input
+            type="text"
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-blue-500"
+            placeholder="أحمد محمد الرشيد"
+          />
+        </div>
+
+        <div>
+          <label className="text-xs font-bold text-slate-700 block mb-1">المسمى الوظيفي</label>
+          <input
+            type="text"
+            value={editHeadline}
+            onChange={(e) => setEditHeadline(e.target.value)}
+            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-blue-500"
+            placeholder="Full Stack Developer"
+          />
+        </div>
+
+        <div>
+          <label className="text-xs font-bold text-slate-700 block mb-1">النبذة المهنية</label>
+          <textarea
+            value={editBio}
+            onChange={(e) => setEditBio(e.target.value)}
+            rows={3}
+            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-blue-500 resize-none"
+            placeholder="اكتب نبذة قصيرة عن خبراتك وأهدافك..."
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-bold text-slate-700 block mb-1">رقم الجوال</label>
+            <input
+              type="tel"
+              value={editPhone}
+              onChange={(e) => setEditPhone(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-blue-500"
+              placeholder="+966 50 000 0000"
+              dir="ltr"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-slate-700 block mb-1">الموقع</label>
+            <input
+              type="text"
+              value={editLocation}
+              onChange={(e) => setEditLocation(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-blue-500"
+              placeholder="الرياض، السعودية"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+          <button
+            type="button"
+            onClick={() => setShowEditModal(false)}
+            className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+          >
+            إلغاء
+          </button>
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold disabled:opacity-60"
+          >
+            {isSaving ? 'جاري الحفظ...' : 'حفظ التعديلات'}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+       )}
     </div>
   );
 };
