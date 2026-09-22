@@ -28,6 +28,8 @@ class UserSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
     companyName = serializers.CharField(source='company_name', required=False, allow_blank=True, allow_null=True)
     isLoggedIn = serializers.SerializerMethodField()
+    firstName = serializers.CharField(source='first_name', required=False, allow_blank=True)
+    lastName = serializers.CharField(source='last_name', required=False, allow_blank=True)
     skills = SkillSerializer(many=True, read_only=True)
     experiences = ExperienceSerializer(many=True, read_only=True)
     educations = EducationSerializer(many=True, read_only=True)
@@ -38,6 +40,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'username', 'name', 'email', 'role', 'headline', 'avatar',
             'companyName', 'phone', 'location', 'bio', 'isLoggedIn',
+            'firstName', 'lastName',
             'skills', 'experiences', 'educations', 'resumes'
         ]
 

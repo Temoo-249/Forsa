@@ -115,8 +115,12 @@ interface AppContextType {
   handleAddSkill: (skill: Omit<SkillItem, 'id'>) => void;
   experiences: ExperienceItem[];
   handleAddExperience: (exp: Omit<ExperienceItem, 'id'>) => void;
+  
   educations: EducationItem[];
   cvFiles: CVFile[];
+
+  
+
   handleUploadCV: (name: string, size: string) => void;
   handleSetDefaultCV: (id: string) => void;
   handleDeleteCV: (id: string) => void;
@@ -145,6 +149,14 @@ interface AppContextType {
   toastMessage: { title: string; subtitle?: string; actionLabel?: string; onAction?: () => void } | null;
   setToastMessage: React.Dispatch<React.SetStateAction<{ title: string; subtitle?: string; actionLabel?: string; onAction?: () => void } | null>>;
   showToast: (title: string, subtitle?: string, actionLabel?: string, onAction?: () => void) => void;
+
+  handleUpdateProfile: (updates: {
+  name?: string;
+  headline?: string;
+  bio?: string;
+  phone?: string;
+  location?: string;
+}) => Promise<boolean>;
 }
 
 // ─── Context ─────────────────────────────────────────────────────
@@ -482,6 +494,47 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setExperiences(prev => [newExp, ...prev]);
     showToast(`تمت إضافة خبرة "${exp.role}" في ${exp.company}`);
   }, [showToast]);
+   
+
+  const handleUpdateProfile = useCallback(async (updates: {
+    name?: string;
+    headline?: string;
+    bio?: string;
+    phone?: string;
+    location?: string;
+   }) => {
+  try {
+    // جهز البيانات للإرسال (نفصل الاسم الأول والأخير)
+    const payload: any = {
+      headline: updates.headline,
+      bio: updates.bio,
+      phone: updates.phone,
+      location: updates.location,
+    };
+
+    if (updates.name) {
+      const parts = updates.name.trim().split(' ');
+      payload.firstName = parts[0] || '';
+      payload.lastName = parts.slice(1).join(' ') || '';
+    }
+
+    const saved = await authAPI.updateProfile(payload);
+
+    if (saved) {
+      setCurrentUser(prev => prev ? { ...prev, ...saved } : null);
+      showToast('تم حفظ التعديلات بنجاح ✓');
+      return true;
+    } else {
+      showToast('تعذر حفظ التعديلات، حاول مرة أخرى');
+      return false;
+    }
+  } catch (e) {
+    console.error('Update profile error', e);
+    showToast('حدث خطأ في الاتصال');
+    return false;
+  }
+  }, [showToast]);
+
 
   const handleUploadCV = useCallback(async (name: string, size: string) => {
     const saved = await authAPI.uploadCV({ name, size, isDefault: false });
@@ -601,6 +654,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // CONTEXT VALUE
   // ═══════════════════════════════════════════════════════════════
   const value = useMemo<AppContextType>(() => ({
+    handleUpdateProfile,
     currentTab, navigate,
     currentUser, setCurrentUser, userRole, setUserRole,
     handleLoginSuccess, handleLogout, handleToggleRole,

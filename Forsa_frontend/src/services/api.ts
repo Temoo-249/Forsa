@@ -160,6 +160,19 @@ export const authAPI = {
       console.error('Set default CV error', e);
       return null;
     }
+  },
+  async updateProfile(profileData: any): Promise<AuthUser | null> {
+  try {
+    const res = await fetch(API_BASE + '/auth/user/', {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(profileData)
+    });
+    return res.ok ? await res.json() : null;
+   } catch (e) {
+    console.error('Update profile error', e);
+    return null;
+   }
   }
 };
 

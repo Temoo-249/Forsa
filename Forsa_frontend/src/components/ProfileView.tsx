@@ -53,6 +53,13 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   currentUser,
   onLogout
 }) => {
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editHeadline, setEditHeadline] = useState('');
+  const [editBio, setEditBio] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editLocation, setEditLocation] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'about' | 'skills' | 'experience' | 'education' | 'cv'>('about');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   
@@ -79,6 +86,35 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const [newExpCompany, setNewExpCompany] = useState('');
   const [newExpPeriod, setNewExpPeriod] = useState('2024 — الآن');
   const [newExpDesc, setNewExpDesc] = useState('');
+
+
+const { handleUpdateProfile } = useApp(); // تأكد من الاستيراد فوق
+
+const openEditModal = () => {
+  setEditName(userName === 'مستخدم جديد' ? '' : userName);
+  setEditHeadline(userHeadline === 'أكمل ملفك الشخصي بإضافة مسمى وظيفي' ? '' : userHeadline);
+  setEditBio(userBio);
+  setEditPhone(userPhone);
+  setEditLocation(userLocation);
+  setShowEditModal(true);
+};
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsSaving(true);
+  const success = await handleUpdateProfile({
+    name: editName.trim(),
+    headline: editHeadline.trim(),
+    bio: editBio.trim(),
+    phone: editPhone.trim(),
+    location: editLocation.trim(),
+  });
+  setIsSaving(false);
+  if (success) {
+    setShowEditModal(false);
+  }
+  };
+
 
   const handleAddSkillSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -175,11 +211,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               </button>
 
               <button
-                onClick={() => setActiveTab('about')}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold transition-all shadow-xs"
-              >
+                onClick={openEditModal}
+                className="..."
+>
                 <Edit3 className="w-4 h-4" />
-                <span>تعديل الملف</span>
+                 <span>تعديل الملف</span>
               </button>
 
               {onLogout && (
@@ -753,3 +789,40 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     </div>
   );
 };
+
+function useApp(): {
+  handleUpdateProfile: (profile: {
+    name: string;
+    headline: string;
+    bio: string;
+    phone: string;
+    location: string;
+  }) => Promise<boolean>;
+} {
+  const handleUpdateProfile = async (profile: {
+    name: string;
+    headline: string;
+    bio: string;
+    phone: string;
+    location: string;
+  }): Promise<boolean> => {
+    try {
+      if (typeof window === 'undefined') return false;
+
+      const storedUser = window.localStorage.getItem('currentUser');
+      const currentUser = storedUser ? JSON.parse(storedUser) : {};
+      const updatedUser = { ...currentUser, ...profile };
+
+      window.localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+      window.dispatchEvent(new CustomEvent('profile-updated', {
+        detail: updatedUser
+      }));
+      return true;
+    } catch (error) {
+      console.error('Unable to update profile', error);
+      return false;
+    }
+  };
+
+  return { handleUpdateProfile };
+}
