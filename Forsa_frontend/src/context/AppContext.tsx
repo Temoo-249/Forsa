@@ -71,6 +71,19 @@ const EMPTY_COMPANY: Company = {
   openJobsCount: 0,
 };
 
+// ─── Feed Comment Type ────────────────────────────────────────────
+export type FeedComment = {
+  id: string;
+  postId: string;
+  parentId?: string | null;
+  userId?: string;
+  authorName: string;
+  authorAvatar: string;
+  avatarColor?: string;
+  content: string;
+  createdAt: string;
+};
+
 // ─── Context Type ────────────────────────────────────────────────
 interface AppContextType {
   // Navigation
@@ -97,8 +110,12 @@ interface AppContextType {
 
   // Posts
   posts: Post[];
-  handleAddPost: (data: Omit<Post, 'id' | 'likes' | 'comments' | 'timeAgo' | 'isLiked'>) => void;
-  handleLikePost: (postId: string) => void;
+  handleAddPost: (data: Omit<Post, 'id' | 'likes' | 'comments' | 'timeAgo' | 'isLiked'>) => Promise<void>;
+  handleLikePost: (postId: string) => Promise<void>;
+  handleDeletePost: (postId: string) => Promise<void>;
+  handleGetComments: (postId: string) => Promise<FeedComment[]>;
+  handleAddComment: (postId: string, content: string, parentId?: string | null) => Promise<FeedComment>;
+  handleDeleteComment: (postId: string, commentId: string) => Promise<void>;
 
   // Messages
   conversations: Conversation[];
@@ -394,34 +411,130 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [jobs, navigate, showToast]);
 
   // ── Posts ──
-  const handleAddPost = useCallback((newPostData: Omit<Post, 'id' | 'likes' | 'comments' | 'timeAgo' | 'isLiked'>) => {
-    postsAPI.createPost({
-      content: newPostData.content,
-      skills: newPostData.skills,
-      category: newPostData.category || 'عام'
-    });
+  const handleAddPost = useCallback(async (
+    newPostData: Omit<Post, 'id' | 'likes' | 'comments' | 'timeAgo' | 'isLiked'>
+  ) => {
+    try {
+      // مهم: نعتمد على ID الذي يرجعه الـ Backend حتى يظل المنشور قابلاً للحذف والتعديل لاحقاً.
+      const savedPost = await postsAPI.createPost({
+        content: newPostData.content,
+        skills: newPostData.skills,
+        category: newPostData.category || 'عام'
+      });
 
-    const post: Post = {
-      ...newPostData,
-      id: `post-${Date.now()}`,
-      likes: 1,
-      comments: 0,
-      timeAgo: 'الآن',
-      isLiked: true
-    };
-    setPosts(prev => [post, ...prev]);
-    showToast('تم نشر منشورك في المجتمع المهني بنجاح');
+      if (!savedPost || !savedPost.id) {
+        throw new Error('The backend did not return the created post.');
+      }
+
+      const post: Post = {
+        ...newPostData,
+        ...savedPost,
+        id: String(savedPost.id),
+        likes: Number(savedPost.likes ?? 0),
+        comments: Number(savedPost.comments ?? 0),
+        timeAgo: savedPost.timeAgo ?? 'الآن',
+        isLiked: Boolean(savedPost.isLiked ?? false)
+      };
+
+      setPosts(prev => [post, ...prev]);
+      showToast('تم نشر منشورك في المجتمع المهني بنجاح');
+    } catch (error) {
+      console.error('Create post error:', error);
+      showToast('تعذر نشر المنشور', 'تحقق من الاتصال بالـ Backend وحاول مرة أخرى');
+    }
   }, [showToast]);
 
-  const handleLikePost = useCallback((postId: string) => {
-    postsAPI.toggleLike(postId);
-    setPosts(prev => prev.map(p => {
-      if (p.id === postId) {
-        return { ...p, likes: p.isLiked ? p.likes - 1 : p.likes + 1, isLiked: !p.isLiked };
+  const handleLikePost = useCallback(async (postId: string) => {
+    try {
+      const result = await postsAPI.toggleLike(postId);
+
+      setPosts(prev => prev.map(p => {
+        if (p.id !== postId) return p;
+
+        // استخدم قيم الـ Backend لو كانت متاحة، وإلا حدث الحالة محلياً بشكل متفائل.
+        const nextLiked = typeof result?.isLiked === 'boolean' ? result.isLiked : !p.isLiked;
+        const nextLikes = typeof result?.likes === 'number'
+          ? result.likes
+          : (nextLiked ? p.likes + 1 : Math.max(0, p.likes - 1));
+
+        return { ...p, likes: nextLikes, isLiked: nextLiked };
+      }));
+    } catch (error) {
+      console.error('Like post error:', error);
+      showToast('تعذر تحديث الإعجاب', 'حاول مرة أخرى');
+    }
+  }, [showToast]);
+
+  const handleDeletePost = useCallback(async (postId: string) => {
+    try {
+      await postsAPI.deletePost(postId);
+      setPosts(prev => prev.filter(p => p.id !== postId));
+      showToast('تم حذف المنشور بنجاح');
+    } catch (error) {
+      console.error('Delete post error:', error);
+      showToast('تعذر حذف المنشور', 'تأكد أن المنشور يخص حسابك وأن الـ Backend متصل');
+      throw error;
+    }
+  }, [showToast]);
+
+  const handleGetComments = useCallback(async (postId: string): Promise<FeedComment[]> => {
+    try {
+      const data = await postsAPI.getComments(postId);
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error('Get comments error:', error);
+      showToast('تعذر تحميل التعليقات', 'حاول مرة أخرى');
+      return [];
+    }
+  }, [showToast]);
+
+  const handleAddComment = useCallback(async (
+    postId: string,
+    content: string,
+    parentId?: string | null
+  ): Promise<FeedComment> => {
+    try {
+      const comment = await postsAPI.addComment(postId, content, parentId);
+
+      if (!comment || !comment.id) {
+        throw new Error('The backend did not return the created comment.');
       }
-      return p;
-    }));
-  }, []);
+
+      setPosts(prev => prev.map(post =>
+        post.id === postId
+          ? { ...post, comments: Math.max(0, Number(post.comments || 0) + 1) }
+          : post
+      ));
+
+      showToast(parentId ? 'تم إضافة الرد بنجاح' : 'تم إضافة تعليقك بنجاح');
+      return comment as FeedComment;
+    } catch (error) {
+      console.error('Add comment error:', error);
+      showToast('تعذر إضافة التعليق', 'حاول مرة أخرى');
+      throw error;
+    }
+  }, [showToast]);
+
+  const handleDeleteComment = useCallback(async (postId: string, commentId: string) => {
+    try {
+      await postsAPI.deleteComment(commentId);
+
+      // نعيد تحميل التعليقات للحصول على العدد الصحيح، خصوصاً إذا حذف التعليق أدى لحذف ردود مرتبطة به.
+      const refreshedComments = await postsAPI.getComments(postId);
+
+      setPosts(prev => prev.map(post =>
+        post.id === postId
+          ? { ...post, comments: Array.isArray(refreshedComments) ? refreshedComments.length : Math.max(0, Number(post.comments || 0) - 1) }
+          : post
+      ));
+
+      showToast('تم حذف التعليق بنجاح');
+    } catch (error) {
+      console.error('Delete comment error:', error);
+      showToast('تعذر حذف التعليق', 'حاول مرة أخرى');
+      throw error;
+    }
+  }, [showToast]);
 
   // ── Messages ──
   const handleSendMessage = useCallback((convId: string, text: string) => {
@@ -439,20 +552,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       return conv;
     }));
 
-    setTimeout(() => {
-      setConversations(prev => prev.map(conv => {
-        if (conv.id === convId) {
-          const reply = {
-            id: `reply-${Date.now()}`,
-            sender: 'company' as const,
-            text: 'شكراً لرسالتك! استلمنا تفاصيلك وسيقوم مسؤول التوظيف بالرد عليك في أقرب وقت.',
-            time: 'الآن'
-          };
-          return { ...conv, lastMessage: reply.text, lastMessageTime: 'الآن', messages: [...conv.messages, reply] };
-        }
-        return conv;
-      }));
-    }, 1500);
+   
   }, []);
 
   const handleRespondOffer = useCallback((convId: string, messageId: string, accepted: boolean) => {
@@ -660,7 +760,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     handleLoginSuccess, handleLogout, handleToggleRole,
     jobs, setJobs, handleToggleSaveJob, handleApplySuccess,
     applications,
-    posts, handleAddPost, handleLikePost,
+    posts, handleAddPost, handleLikePost, handleDeletePost,
+    handleGetComments, handleAddComment, handleDeleteComment,
     conversations, handleSendMessage, handleRespondOffer,
     notifications, handleNotificationClick, handleMarkAllNotificationsRead,
     skills, handleAddSkill,
@@ -680,7 +781,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     handleLoginSuccess, handleLogout, handleToggleRole,
     jobs, handleToggleSaveJob, handleApplySuccess,
     applications,
-    posts, handleAddPost, handleLikePost,
+    posts, handleAddPost, handleLikePost, handleDeletePost,
+    handleGetComments, handleAddComment, handleDeleteComment,
     conversations, handleSendMessage, handleRespondOffer,
     notifications, handleNotificationClick, handleMarkAllNotificationsRead,
     skills, handleAddSkill,

@@ -324,6 +324,104 @@ export const postsAPI = {
       console.error('Failed to like post', e);
       return null;
     }
+  },
+
+  // حذف منشور: يعتمد على صلاحيات الـ Django Backend لتحديد صاحب المنشور.
+  async deletePost(postId: string): Promise<void> {
+    try {
+      const res = await fetch(API_BASE + '/posts/' + postId + '/', {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+
+      if (!res.ok) {
+        let detail = 'Failed to delete post';
+        try {
+          const data = await res.json();
+          detail = data?.detail || detail;
+        } catch {
+          // بعض استجابات DELETE ترجع بدون JSON.
+        }
+        throw new Error(detail);
+      }
+    } catch (e) {
+      console.error('Failed to delete post', e);
+      throw e;
+    }
+  },
+
+  // جلب تعليقات المنشور.
+  async getComments(postId: string): Promise<any[]> {
+    try {
+      const res = await fetch(API_BASE + '/posts/' + postId + '/comments/', {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to load comments');
+      }
+
+      const data = await res.json();
+      return Array.isArray(data) ? data : (Array.isArray(data?.results) ? data.results : []);
+    } catch (e) {
+      console.error('Failed to get comments', e);
+      throw e;
+    }
+  },
+
+  // إضافة تعليق أو رد على تعليق باستخدام parent_id.
+  async addComment(postId: string, content: string, parentId?: string | null): Promise<any> {
+    try {
+      const res = await fetch(API_BASE + '/posts/' + postId + '/comments/', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          content: content.trim(),
+          ...(parentId ? { parent_id: parentId } : {})
+        })
+      });
+
+      if (!res.ok) {
+        let detail = 'Failed to add comment';
+        try {
+          const data = await res.json();
+          detail = data?.detail || detail;
+        } catch {
+          // تجاهل فشل قراءة JSON.
+        }
+        throw new Error(detail);
+      }
+
+      return await res.json();
+    } catch (e) {
+      console.error('Failed to add comment', e);
+      throw e;
+    }
+  },
+
+  // حذف تعليق. صلاحية الحذف يجب أن تُفرض أيضاً من Django.
+  async deleteComment(commentId: string): Promise<void> {
+    try {
+      const res = await fetch(API_BASE + '/comments/' + commentId + '/', {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+
+      if (!res.ok) {
+        let detail = 'Failed to delete comment';
+        try {
+          const data = await res.json();
+          detail = data?.detail || detail;
+        } catch {
+          // DELETE قد يرجع بدون JSON.
+        }
+        throw new Error(detail);
+      }
+    } catch (e) {
+      console.error('Failed to delete comment', e);
+      throw e;
+    }
   }
 };
 

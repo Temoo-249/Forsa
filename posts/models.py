@@ -34,10 +34,18 @@ class PostLike(models.Model):
         unique_together = ('user', 'post')
 
 class PostComment(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='post_comments')
+    id = models.CharField(max_length=50, primary_key=True)
+    user = models.ForeignKey('accounts.User', on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
+    parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='replies')
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"Comment by {self.user.username} on {self.post.id}"
+    class Meta:
+        ordering = ['created_at']
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            import uuid
+            self.id = f"comment-{uuid.uuid4().hex[:8]}"
+        super().save(*args, **kwargs)
