@@ -50,7 +50,7 @@ interface FeedViewProps {
     parentId?: string | null
   ) => Promise<FeedComment>;
 
-  onDeleteComment: (commentId: string) => Promise<void>;
+  onDeleteComment: (postId: string, commentId: string) => Promise<void>;
 
   recommendedJobs: Job[];
   onSelectJobForDetail: (job: Job) => void;
@@ -265,8 +265,8 @@ export const FeedView: React.FC<FeedViewProps> = ({
     setDeletingComment(commentId);
 
     try {
-      await onDeleteComment(commentId);
-
+      await onDeleteComment(postId, commentId);
+      
       setComments((prev) => ({
         ...prev,
         [postId]: (prev[postId] || []).filter(
