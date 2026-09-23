@@ -589,24 +589,7 @@ export const FeedView: React.FC<FeedViewProps> = ({
                     </div>
                   </div>
 
-                  {/* Delete Post */}
-                  {isOwnPost(post) && (
-                    <button
-                      type="button"
-                      onClick={() => handleDeletePost(post.id)}
-                      disabled={deletingPostId === post.id}
-                      title="حذف المنشور"
-                      className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
-                    >
-                      {deletingPostId === post.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="w-4 h-4" />
-                      )}
-                    </button>
-                  )}
-                </div>
-
+                 
                 {/* Post Content */}
                 <p className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line">
                   {post.content}
@@ -659,6 +642,23 @@ export const FeedView: React.FC<FeedViewProps> = ({
                       <span>{post.likes}</span>
                       <span className="hidden sm:inline">أعجبني</span>
                     </button>
+                   {/* Delete Post */}
+                  {isOwnPost(post) && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeletePost(post.id)}
+                      disabled={deletingPostId === post.id}
+                      title="حذف المنشور"
+                      className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                    >
+                      {deletingPostId === post.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </button>
+                  )}
+                </div>
 
                     {/* Comments */}
                     <button
