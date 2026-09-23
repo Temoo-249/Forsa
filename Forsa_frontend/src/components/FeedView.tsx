@@ -612,15 +612,15 @@ export const FeedView: React.FC<FeedViewProps> = ({
                   {post.content}
                 </p>
                  {/* Post Image */}
-{(post as any).image && (
-  <div className="rounded-xl overflow-hidden border border-slate-200">
-    <img
-      src={(post as any).image}
-      alt="post"
-      className="w-full max-h-96 object-cover"
-    />
-  </div>
-)}
+                 {(post as any).image && (
+                   <div className="rounded-xl overflow-hidden border border-slate-200">
+                    <img
+                     src={(post as any).image}
+                      alt="post"
+                      className="w-full max-h-96 object-cover"
+                      />
+                   </div>
+                 )}
                 {/* Skills */}
                 {post.skills?.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
