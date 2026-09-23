@@ -16,7 +16,6 @@ import {
   Reply,
   X,
   Loader2,
-  MoreHorizontal,
 } from 'lucide-react';
 
 type FeedComment = {
@@ -33,25 +32,18 @@ type FeedComment = {
 
 interface FeedViewProps {
   posts: Post[];
-
   onAddPost: (
     post: Omit<Post, 'id' | 'likes' | 'comments' | 'timeAgo' | 'isLiked'>
   ) => Promise<void> | void;
-
   onLikePost: (postId: string) => Promise<void> | void;
-
   onDeletePost: (postId: string) => Promise<void> | void;
-
   onGetComments: (postId: string) => Promise<FeedComment[]>;
-
   onAddComment: (
     postId: string,
     content: string,
     parentId?: string | null
   ) => Promise<FeedComment>;
-
   onDeleteComment: (postId: string, commentId: string) => Promise<void>;
-
   recommendedJobs: Job[];
   onSelectJobForDetail: (job: Job) => void;
   onSelectJobForApply: (job: Job) => void;
@@ -80,110 +72,75 @@ export const FeedView: React.FC<FeedViewProps> = ({
     useState<'عام' | 'عرض مهارات' | 'إنجاز' | 'سؤال'>('عام');
   const [postImage, setPostImage] = useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-
   const [skillInput, setSkillInput] = useState('');
   const [skillsList, setSkillsList] = useState<string[]>([]);
-
   const [copiedPostId, setCopiedPostId] = useState<string | null>(null);
-
   const [openComments, setOpenComments] = useState<string | null>(null);
-
-  const [comments, setComments] = useState<Record<string, FeedComment[]>>(
-    {}
-  );
-
-  const [loadingComments, setLoadingComments] = useState<
-    Record<string, boolean>
-  >({});
-
+  const [comments, setComments] = useState<Record<string, FeedComment[]>>({});
+  const [loadingComments, setLoadingComments] = useState<Record<string, boolean>>({});
   const [commentText, setCommentText] = useState<Record<string, string>>({});
-
   const [replyingTo, setReplyingTo] = useState<{
     postId: string;
     commentId: string;
     authorName: string;
   } | null>(null);
-
-  const [sendingComment, setSendingComment] = useState<
-    Record<string, boolean>
-  >({});
-
+  const [sendingComment, setSendingComment] = useState<Record<string, boolean>>({});
   const [deletingComment, setDeletingComment] = useState<string | null>(null);
-
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
 
   const userName = currentUser?.name || 'مستخدم';
   const userHeadline = currentUser?.headline || '';
   const userAvatar = currentUser?.avatar || userName.charAt(0);
-
   const currentUserId = String(
-    (currentUser as any)?.id ??
-      (currentUser as any)?.userId ??
-      ''
+    (currentUser as any)?.id ?? (currentUser as any)?.userId ?? ''
   );
 
   const handleCreatePost = async (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
+    const content = postContent.trim();
+    if (!content) return;
 
-  const content = postContent.trim();
+    await onAddPost({
+      authorName: userName,
+      authorHeadline: userHeadline,
+      authorAvatar: userAvatar,
+      avatarColor: 'bg-blue-600',
+      content,
+      skills: [...skillsList],
+      category: postCategory,
+      image: postImage,
+    } as any);
 
-  if (!content) return;
-
-  await onAddPost({
-    authorName: userName,
-    authorHeadline: userHeadline,
-    authorAvatar: userAvatar,
-    avatarColor: 'bg-blue-600',
-    content,
-    skills: [...skillsList],
-    category: postCategory,
-    image: postImage,
-  } as any);
-
-  setPostContent('');
-  setSkillInput('');
-  setSkillsList([]);
-  setPostCategory('عام');
-  setPostImage(null);
-};
-
+    setPostContent('');
+    setSkillInput('');
+    setSkillsList([]);
+    setPostCategory('عام');
+    setPostImage(null);
+  };
 
   const addSkill = () => {
     const value = skillInput.trim();
-
     if (!value) return;
-
     if (!skillsList.includes(value)) {
       setSkillsList((prev) => [...prev, value]);
     }
-
     setSkillInput('');
   };
 
   const removeSkill = (skillToRemove: string) => {
-    setSkillsList((prev) =>
-      prev.filter((skill) => skill !== skillToRemove)
-    );
+    setSkillsList((prev) => prev.filter((skill) => skill !== skillToRemove));
   };
 
   const handleShare = async (postId: string) => {
     const shareUrl = `${window.location.origin}/feed#post-${postId}`;
-
     try {
       if (navigator.share) {
-        await navigator.share({
-          title: 'منشور على فرصة',
-          url: shareUrl,
-        });
+        await navigator.share({ title: 'منشور على فرصة', url: shareUrl });
         return;
       }
-
       await navigator.clipboard.writeText(shareUrl);
       setCopiedPostId(postId);
-
-      window.setTimeout(() => {
-        setCopiedPostId(null);
-      }, 2000);
+      window.setTimeout(() => setCopiedPostId(null), 2000);
     } catch {
       // المستخدم أغلق نافذة المشاركة
     }
@@ -194,30 +151,15 @@ export const FeedView: React.FC<FeedViewProps> = ({
       setOpenComments(null);
       return;
     }
-
     setOpenComments(postId);
+    if (comments[postId]) return;
 
-    if (comments[postId]) {
-      return;
-    }
-
-    setLoadingComments((prev) => ({
-      ...prev,
-      [postId]: true,
-    }));
-
+    setLoadingComments((prev) => ({ ...prev, [postId]: true }));
     try {
       const result = await onGetComments(postId);
-
-      setComments((prev) => ({
-        ...prev,
-        [postId]: result,
-      }));
+      setComments((prev) => ({ ...prev, [postId]: result }));
     } finally {
-      setLoadingComments((prev) => ({
-        ...prev,
-        [postId]: false,
-      }));
+      setLoadingComments((prev) => ({ ...prev, [postId]: false }));
     }
   };
 
@@ -226,58 +168,31 @@ export const FeedView: React.FC<FeedViewProps> = ({
     parentId: string | null = null
   ) => {
     const text = (commentText[postId] || '').trim();
-
     if (!text) return;
 
-    setSendingComment((prev) => ({
-      ...prev,
-      [postId]: true,
-    }));
-
+    setSendingComment((prev) => ({ ...prev, [postId]: true }));
     try {
-      const created = await onAddComment(
-        postId,
-        text,
-        parentId
-      );
-
+      const created = await onAddComment(postId, text, parentId);
       setComments((prev) => ({
         ...prev,
-        [postId]: [
-          ...(prev[postId] || []),
-          created,
-        ],
+        [postId]: [...(prev[postId] || []), created],
       }));
-
-      setCommentText((prev) => ({
-        ...prev,
-        [postId]: '',
-      }));
-
+      setCommentText((prev) => ({ ...prev, [postId]: '' }));
       setReplyingTo(null);
     } finally {
-      setSendingComment((prev) => ({
-        ...prev,
-        [postId]: false,
-      }));
+      setSendingComment((prev) => ({ ...prev, [postId]: false }));
     }
   };
 
-  const handleDeleteComment = async (
-    postId: string,
-    commentId: string
-  ) => {
+  const handleDeleteComment = async (postId: string, commentId: string) => {
     setDeletingComment(commentId);
-
     try {
       await onDeleteComment(postId, commentId);
-
       setComments((prev) => ({
         ...prev,
         [postId]: (prev[postId] || []).filter(
           (comment) =>
-            comment.id !== commentId &&
-            comment.parentId !== commentId
+            comment.id !== commentId && comment.parentId !== commentId
         ),
       }));
     } finally {
@@ -289,11 +204,9 @@ export const FeedView: React.FC<FeedViewProps> = ({
     const confirmed = window.confirm(
       'هل أنت متأكد من حذف هذا المنشور؟ لا يمكن التراجع عن هذه العملية.'
     );
-
     if (!confirmed) return;
 
     setDeletingPostId(postId);
-
     try {
       await onDeletePost(postId);
     } finally {
@@ -302,28 +215,18 @@ export const FeedView: React.FC<FeedViewProps> = ({
   };
 
   const rootComments = (postId: string) =>
-    (comments[postId] || []).filter(
-      (comment) => !comment.parentId
-    );
+    (comments[postId] || []).filter((comment) => !comment.parentId);
 
-  const commentReplies = (
-    postId: string,
-    parentId: string
-  ) =>
+  const commentReplies = (postId: string, parentId: string) =>
     (comments[postId] || []).filter(
       (comment) => comment.parentId === parentId
     );
 
   const isOwnPost = (post: Post) => {
-    const authorId =
-      (post as any).authorId ??
-      (post as any).userId ??
-      null;
-
+    const authorId = (post as any).authorId ?? (post as any).userId ?? null;
     if (authorId !== null && currentUserId) {
       return String(authorId) === currentUserId;
     }
-
     return post.authorName === userName;
   };
 
@@ -331,34 +234,26 @@ export const FeedView: React.FC<FeedViewProps> = ({
     if (comment.userId && currentUserId) {
       return String(comment.userId) === currentUserId;
     }
-
     return comment.authorName === userName;
   };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-
-      {/* =========================
-          MAIN FEED
-      ========================= */}
+      {/* MAIN FEED */}
       <div className="lg:col-span-8 space-y-5">
-
         {/* Header */}
         <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-4 sm:p-5 flex items-center justify-between gap-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-2">
               <span>الرئيسية</span>
-
               <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/80">
                 المنشورات والمجتمع المهني
               </span>
             </h1>
-
             <p className="text-xs text-slate-500 font-medium mt-1">
               شارك تجاربك وخبراتك المهنية وتواصل مع مجتمع فرصة.
             </p>
           </div>
-
           <button
             onClick={() => onNavigateTab('landing')}
             className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-blue-50 text-slate-600 hover:text-blue-700 text-xs font-bold border border-slate-200/80 transition-colors"
@@ -374,11 +269,9 @@ export const FeedView: React.FC<FeedViewProps> = ({
           className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 space-y-4"
         >
           <div className="flex items-start gap-3.5">
-
             <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
               {userAvatar}
             </div>
-
             <div className="flex-1">
               <textarea
                 value={postContent}
@@ -390,25 +283,25 @@ export const FeedView: React.FC<FeedViewProps> = ({
             </div>
           </div>
 
+          {/* Category */}
           <div className="flex flex-wrap gap-1.5">
-            {(['عام', 'عرض مهارات', 'إنجاز', 'سؤال'] as const).map(
-              (cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setPostCategory(cat)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                    postCategory === cat
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
-                >
-                  {cat}
-                </button>
-              )
-            )}
+            {(['عام', 'عرض مهارات', 'إنجاز', 'سؤال'] as const).map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setPostCategory(cat)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                  postCategory === cat
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
           </div>
 
+          {/* Skills */}
           <div className="flex flex-wrap items-center gap-2">
             {skillsList.map((skill) => (
               <span
@@ -416,7 +309,6 @@ export const FeedView: React.FC<FeedViewProps> = ({
                 className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100"
               >
                 #{skill}
-
                 <button
                   type="button"
                   onClick={() => removeSkill(skill)}
@@ -440,7 +332,6 @@ export const FeedView: React.FC<FeedViewProps> = ({
               placeholder="+ وسم مهارة"
               className="px-2.5 py-1 rounded-md text-xs border border-slate-200 focus:outline-none focus:border-blue-500 w-28 bg-slate-50"
             />
-
             {skillInput && (
               <button
                 type="button"
@@ -451,53 +342,55 @@ export const FeedView: React.FC<FeedViewProps> = ({
               </button>
             )}
           </div>
-                {/* معاينة الصورة */}
-{postImage && (
-  <div className="relative inline-block">
-    <img
-      src={postImage}
-      alt="preview"
-      className="max-h-48 rounded-xl border border-slate-200"
-    />
-    <button
-      type="button"
-      onClick={() => setPostImage(null)}
-      className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-rose-600 text-white text-sm font-bold shadow-md hover:bg-rose-700"
-    >
-      ✕
-    </button>
-  </div>
-)}
-          <div className="flex items-center justify-between pt-3 border-t border-slate-100">
 
+          {/* معاينة الصورة - مرة واحدة فقط */}
+          {postImage && (
+            <div className="relative inline-block">
+              <img
+                src={postImage}
+                alt="preview"
+                className="max-h-48 rounded-xl border border-slate-200"
+              />
+              <button
+                type="button"
+                onClick={() => setPostImage(null)}
+                className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-rose-600 text-white text-sm font-bold shadow-md hover:bg-rose-700"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Footer */}
+          <div className="flex items-center justify-between pt-3 border-t border-slate-100">
             <div className="flex items-center gap-2">
               <button
-                    type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-100 text-xs font-semibold"
->
-                    <ImageIcon className="w-4 h-4 text-blue-600" />
-                    صورة
-                    </button>
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-100 text-xs font-semibold"
+              >
+                <ImageIcon className="w-4 h-4 text-blue-600" />
+                صورة
+              </button>
 
-                      <input
-                            ref={fileInputRef}
-                        type="file"
-                       accept="image/*"
-                 className="hidden"
-                         onChange={(e) => {
-                    const file = e.target.files?.[0];
-                      if (file) {
-                      if (file.size > 5 * 1024 * 1024) {
-                              alert('حجم الصورة كبير جدًا، الحد الأقصى 5 ميجابايت');
-                               return;
-                            }
-                          const reader = new FileReader();
-                      reader.onload = () => setPostImage(reader.result as string);
-                       reader.readAsDataURL(file);
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    if (file.size > 5 * 1024 * 1024) {
+                      alert('حجم الصورة كبير جدًا، الحد الأقصى 5 ميجابايت');
+                      return;
                     }
-                    }}
-/>
+                    const reader = new FileReader();
+                    reader.onload = () => setPostImage(reader.result as string);
+                    reader.readAsDataURL(file);
+                  }
+                }}
+              />
 
               <button
                 type="button"
@@ -508,22 +401,7 @@ export const FeedView: React.FC<FeedViewProps> = ({
                 مهارات
               </button>
             </div>
-              {postImage && (
-                 <div className="relative inline-block">
-                    <img
-                             src={postImage}
-                      alt="preview"
-                        className="max-h-48 rounded-xl border border-slate-200"
-                         />
-                       <button
-                       type="button"
-                 onClick={() => setPostImage(null)}
-                      className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-rose-600 text-white text-sm font-bold shadow-md hover:bg-rose-700"
-                         >
-                       ✕
-                    </button>
-                </div>
-                  )}
+
             <button
               type="submit"
               disabled={!postContent.trim()}
@@ -535,11 +413,8 @@ export const FeedView: React.FC<FeedViewProps> = ({
           </div>
         </form>
 
-        {/* =========================
-            POSTS
-        ========================= */}
+        {/* POSTS */}
         <div className="space-y-4">
-
           {posts.length === 0 ? (
             <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center">
               <p className="text-slate-500 text-sm font-medium">
@@ -553,10 +428,8 @@ export const FeedView: React.FC<FeedViewProps> = ({
                 key={post.id}
                 className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6 space-y-4"
               >
-
                 {/* Post Header */}
                 <div className="flex items-start justify-between">
-
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-11 h-11 rounded-full ${
@@ -565,84 +438,27 @@ export const FeedView: React.FC<FeedViewProps> = ({
                     >
                       {post.authorAvatar}
                     </div>
-
                     <div>
                       <div className="flex items-center gap-2">
                         <h4 className="font-bold text-sm text-slate-900">
                           {post.authorName}
                         </h4>
-
                         {post.category && (
                           <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700">
                             {post.category}
                           </span>
                         )}
                       </div>
-
                       <p className="text-[11px] text-slate-500 mt-1">
                         {post.authorHeadline}
                       </p>
-
                       <span className="text-[10px] text-slate-400 mt-0.5 block">
                         {post.timeAgo}
                       </span>
                     </div>
                   </div>
 
-                 
-                {/* Post Content */}
-                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line">
-                  {post.content}
-                </p>
-                 {/* Post Image */}
-                 {(post as any).image && (
-                   <div className="rounded-xl overflow-hidden border border-slate-200">
-                    <img
-                     src={(post as any).image}
-                      alt="post"
-                      className="w-full max-h-96 object-cover"
-                      />
-                   </div>
-                 )}
-                {/* Skills */}
-                {post.skills?.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {post.skills.map((skill, idx) => (
-                      <span
-                        key={`${post.id}-${idx}`}
-                        className="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-slate-50 text-slate-600 border border-slate-200/60"
-                      >
-                        #{skill}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-
-                  <div className="flex items-center gap-2">
-
-                    {/* Like */}
-                    <button
-                      type="button"
-                      onClick={() => onLikePost(post.id)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                        post.isLiked
-                          ? 'text-blue-600 bg-blue-50'
-                          : 'text-slate-600 hover:bg-slate-100'
-                      }`}
-                    >
-                      <ThumbsUp
-                        className={`w-4 h-4 ${
-                          post.isLiked ? 'fill-blue-600' : ''
-                        }`}
-                      />
-
-                      <span>{post.likes}</span>
-                      <span className="hidden sm:inline">أعجبني</span>
-                    </button>
-                   {/* Delete Post */}
+                  {/* Delete Post */}
                   {isOwnPost(post) && (
                     <button
                       type="button"
@@ -660,6 +476,58 @@ export const FeedView: React.FC<FeedViewProps> = ({
                   )}
                 </div>
 
+                {/* Post Content */}
+                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line">
+                  {post.content}
+                </p>
+
+                {/* Post Image */}
+                {(post as any).image && (
+                  <div className="rounded-xl overflow-hidden border border-slate-200">
+                    <img
+                      src={(post as any).image}
+                      alt="post"
+                      className="w-full max-h-96 object-cover"
+                    />
+                  </div>
+                )}
+
+                {/* Skills */}
+                {post.skills?.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {post.skills.map((skill, idx) => (
+                      <span
+                        key={`${post.id}-${idx}`}
+                        className="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-slate-50 text-slate-600 border border-slate-200/60"
+                      >
+                        #{skill}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {/* Like */}
+                    <button
+                      type="button"
+                      onClick={() => onLikePost(post.id)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                        post.isLiked
+                          ? 'text-blue-600 bg-blue-50'
+                          : 'text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      <ThumbsUp
+                        className={`w-4 h-4 ${
+                          post.isLiked ? 'fill-blue-600' : ''
+                        }`}
+                      />
+                      <span>{post.likes}</span>
+                      <span className="hidden sm:inline">أعجبني</span>
+                    </button>
+
                     {/* Comments */}
                     <button
                       type="button"
@@ -671,14 +539,8 @@ export const FeedView: React.FC<FeedViewProps> = ({
                       }`}
                     >
                       <MessageCircle className="w-4 h-4" />
-
-                      <span>
-                        {comments[post.id]?.length ?? post.comments}
-                      </span>
-
-                      <span className="hidden sm:inline">
-                        تعليق
-                      </span>
+                      <span>{comments[post.id]?.length ?? post.comments}</span>
+                      <span className="hidden sm:inline">تعليق</span>
                     </button>
                   </div>
 
@@ -699,27 +561,20 @@ export const FeedView: React.FC<FeedViewProps> = ({
                   </div>
                 )}
 
-                {/* =========================
-                    COMMENTS
-                ========================= */}
+                {/* COMMENTS */}
                 {openComments === post.id && (
                   <div className="mt-2 pt-4 border-t border-slate-100 space-y-4">
-
-                    {/* Add Comment */}
                     <div className="flex items-start gap-3">
-
                       <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
                         {userAvatar}
                       </div>
 
                       <div className="flex-1">
-
                         {replyingTo?.postId === post.id && (
                           <div className="flex items-center justify-between mb-2 px-3 py-2 bg-blue-50 rounded-lg">
                             <span className="text-[11px] text-blue-700 font-semibold">
                               الرد على {replyingTo.authorName}
                             </span>
-
                             <button
                               type="button"
                               onClick={() => setReplyingTo(null)}
@@ -731,7 +586,6 @@ export const FeedView: React.FC<FeedViewProps> = ({
                         )}
 
                         <div className="flex items-end gap-2">
-
                           <textarea
                             value={commentText[post.id] || ''}
                             onChange={(e) =>
@@ -743,7 +597,6 @@ export const FeedView: React.FC<FeedViewProps> = ({
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault();
-
                                 handleSendComment(
                                   post.id,
                                   replyingTo?.postId === post.id
@@ -760,7 +613,6 @@ export const FeedView: React.FC<FeedViewProps> = ({
                             }
                             className="flex-1 resize-none rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
                           />
-
                           <button
                             type="button"
                             disabled={
@@ -787,14 +639,12 @@ export const FeedView: React.FC<FeedViewProps> = ({
                       </div>
                     </div>
 
-                    {/* Loading */}
                     {loadingComments[post.id] && (
                       <div className="flex justify-center py-5">
                         <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
                       </div>
                     )}
 
-                    {/* Comments */}
                     {!loadingComments[post.id] &&
                       rootComments(post.id).length === 0 && (
                         <div className="text-center py-5">
@@ -807,10 +657,7 @@ export const FeedView: React.FC<FeedViewProps> = ({
                     {!loadingComments[post.id] &&
                       rootComments(post.id).map((comment) => (
                         <div key={comment.id} className="space-y-2">
-
-                          {/* Root Comment */}
                           <div className="flex items-start gap-3">
-
                             <div
                               className={`w-9 h-9 rounded-full ${
                                 comment.avatarColor || 'bg-slate-600'
@@ -818,34 +665,23 @@ export const FeedView: React.FC<FeedViewProps> = ({
                             >
                               {comment.authorAvatar}
                             </div>
-
                             <div className="flex-1 min-w-0">
-
                               <div className="bg-slate-50 rounded-xl p-3">
-
                                 <div className="flex items-start justify-between gap-2">
-
                                   <div>
                                     <p className="text-xs font-bold text-slate-900">
                                       {comment.authorName}
                                     </p>
-
                                     <span className="text-[10px] text-slate-400">
                                       {comment.createdAt}
                                     </span>
                                   </div>
-
                                   {isOwnComment(comment) && (
                                     <button
                                       type="button"
-                                      disabled={
-                                        deletingComment === comment.id
-                                      }
+                                      disabled={deletingComment === comment.id}
                                       onClick={() =>
-                                        handleDeleteComment(
-                                          post.id,
-                                          comment.id
-                                        )
+                                        handleDeleteComment(post.id, comment.id)
                                       }
                                       className="text-slate-400 hover:text-red-600"
                                     >
@@ -857,14 +693,12 @@ export const FeedView: React.FC<FeedViewProps> = ({
                                     </button>
                                   )}
                                 </div>
-
                                 <p className="text-xs text-slate-700 leading-relaxed mt-2 whitespace-pre-line">
                                   {comment.content}
                                 </p>
                               </div>
 
                               <div className="flex items-center gap-3 px-2">
-
                                 <button
                                   type="button"
                                   onClick={() =>
@@ -879,91 +713,71 @@ export const FeedView: React.FC<FeedViewProps> = ({
                                   <Reply className="w-3.5 h-3.5" />
                                   رد
                                 </button>
-
-                                {commentReplies(
-                                  post.id,
-                                  comment.id
-                                ).length > 0 && (
+                                {commentReplies(post.id, comment.id).length >
+                                  0 && (
                                   <span className="text-[10px] text-slate-400">
-                                    {
-                                      commentReplies(
-                                        post.id,
-                                        comment.id
-                                      ).length
-                                    }{' '}
+                                    {commentReplies(post.id, comment.id).length}{' '}
                                     ردود
                                   </span>
                                 )}
                               </div>
 
-                              {/* Replies */}
-                              {commentReplies(
-                                post.id,
-                                comment.id
-                              ).length > 0 && (
+                              {commentReplies(post.id, comment.id).length >
+                                0 && (
                                 <div className="mt-3 mr-8 space-y-3">
-                                  {commentReplies(
-                                    post.id,
-                                    comment.id
-                                  ).map((reply) => (
-                                    <div
-                                      key={reply.id}
-                                      className="flex items-start gap-2"
-                                    >
+                                  {commentReplies(post.id, comment.id).map(
+                                    (reply) => (
                                       <div
-                                        className={`w-7 h-7 rounded-full ${
-                                          reply.avatarColor ||
-                                          'bg-indigo-600'
-                                        } text-white flex items-center justify-center text-[10px] font-bold shrink-0`}
+                                        key={reply.id}
+                                        className="flex items-start gap-2"
                                       >
-                                        {reply.authorAvatar}
-                                      </div>
-
-                                      <div className="flex-1 bg-slate-50/80 rounded-xl p-3">
-
-                                        <div className="flex items-start justify-between gap-2">
-
-                                          <div>
-                                            <p className="text-[11px] font-bold text-slate-900">
-                                              {reply.authorName}
-                                            </p>
-
-                                            <span className="text-[9px] text-slate-400">
-                                              {reply.createdAt}
-                                            </span>
-                                          </div>
-
-                                          {isOwnComment(reply) && (
-                                            <button
-                                              type="button"
-                                              disabled={
-                                                deletingComment ===
-                                                reply.id
-                                              }
-                                              onClick={() =>
-                                                handleDeleteComment(
-                                                  post.id,
-                                                  reply.id
-                                                )
-                                              }
-                                              className="text-slate-400 hover:text-red-600"
-                                            >
-                                              {deletingComment ===
-                                              reply.id ? (
-                                                <Loader2 className="w-3 h-3 animate-spin" />
-                                              ) : (
-                                                <Trash2 className="w-3 h-3" />
-                                              )}
-                                            </button>
-                                          )}
+                                        <div
+                                          className={`w-7 h-7 rounded-full ${
+                                            reply.avatarColor || 'bg-indigo-600'
+                                          } text-white flex items-center justify-center text-[10px] font-bold shrink-0`}
+                                        >
+                                          {reply.authorAvatar}
                                         </div>
-
-                                        <p className="text-xs text-slate-700 mt-1.5 whitespace-pre-line">
-                                          {reply.content}
-                                        </p>
+                                        <div className="flex-1 bg-slate-50/80 rounded-xl p-3">
+                                          <div className="flex items-start justify-between gap-2">
+                                            <div>
+                                              <p className="text-[11px] font-bold text-slate-900">
+                                                {reply.authorName}
+                                              </p>
+                                              <span className="text-[9px] text-slate-400">
+                                                {reply.createdAt}
+                                              </span>
+                                            </div>
+                                            {isOwnComment(reply) && (
+                                              <button
+                                                type="button"
+                                                disabled={
+                                                  deletingComment === reply.id
+                                                }
+                                                onClick={() =>
+                                                  handleDeleteComment(
+                                                    post.id,
+                                                    reply.id
+                                                  )
+                                                }
+                                                className="text-slate-400 hover:text-red-600"
+                                              >
+                                                {deletingComment ===
+                                                reply.id ? (
+                                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                                ) : (
+                                                  <Trash2 className="w-3 h-3" />
+                                                )}
+                                              </button>
+                                            )}
+                                          </div>
+                                          <p className="text-xs text-slate-700 mt-1.5 whitespace-pre-line">
+                                            {reply.content}
+                                          </p>
+                                        </div>
                                       </div>
-                                    </div>
-                                  ))}
+                                    )
+                                  )}
                                 </div>
                               )}
                             </div>
@@ -978,59 +792,39 @@ export const FeedView: React.FC<FeedViewProps> = ({
         </div>
       </div>
 
-      {/* =========================
-          SIDEBAR
-      ========================= */}
+      {/* SIDEBAR */}
       <div className="lg:col-span-4 space-y-5">
-
         {/* Profile */}
         <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 text-center space-y-4">
-
           <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xl flex items-center justify-center mx-auto">
             {userAvatar}
           </div>
-
           <div>
-            <h3 className="font-bold text-base text-slate-900">
-              {userName}
-            </h3>
-
+            <h3 className="font-bold text-base text-slate-900">{userName}</h3>
             <p className="text-xs text-slate-500">
               {userHeadline || 'أكمل ملفك الشخصي'}
             </p>
           </div>
-
           <div className="grid grid-cols-3 gap-2 py-3 border-y border-slate-100 text-center">
-
             <div>
               <span className="text-base font-black text-blue-700 block">
                 {applicationsCount}
               </span>
-              <span className="text-[11px] text-slate-400">
-                طلباتي
-              </span>
+              <span className="text-[11px] text-slate-400">طلباتي</span>
             </div>
-
             <div className="border-x border-slate-100">
               <span className="text-base font-black text-slate-900 block">
                 —
               </span>
-              <span className="text-[11px] text-slate-400">
-                مشاهدات
-              </span>
+              <span className="text-[11px] text-slate-400">مشاهدات</span>
             </div>
-
             <div>
               <span className="text-base font-black text-slate-900 block">
                 —
               </span>
-              <span className="text-[11px] text-slate-400">
-                المتابعون
-              </span>
+              <span className="text-[11px] text-slate-400">المتابعون</span>
             </div>
-
           </div>
-
           <button
             onClick={() => onNavigateTab('profile')}
             className="w-full py-2 px-3 rounded-xl border border-blue-200 text-blue-700 hover:bg-blue-50 text-xs font-bold"
@@ -1041,13 +835,11 @@ export const FeedView: React.FC<FeedViewProps> = ({
 
         {/* Recommended Jobs */}
         <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 space-y-4">
-
           <div className="flex items-center justify-between">
             <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
               <Briefcase className="w-4 h-4 text-blue-600" />
               وظائف موصى بها
             </h3>
-
             <button
               onClick={() => onNavigateTab('jobs')}
               className="text-xs text-blue-600 font-bold"
@@ -1055,9 +847,7 @@ export const FeedView: React.FC<FeedViewProps> = ({
               عرض الكل
             </button>
           </div>
-
           <div className="space-y-3">
-
             {recommendedJobs.length === 0 ? (
               <p className="text-xs text-slate-500 text-center py-3">
                 لا توجد وظائف متاحة حالياً
@@ -1069,33 +859,24 @@ export const FeedView: React.FC<FeedViewProps> = ({
                   className="pt-3 first:pt-0 border-t first:border-t-0 border-slate-100"
                 >
                   <div className="flex items-start justify-between gap-2">
-
                     <div className="flex items-center gap-2.5">
-
                       <span className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center text-base">
                         {job.logo}
                       </span>
-
                       <div>
                         <h4
-                          onClick={() =>
-                            onSelectJobForDetail(job)
-                          }
+                          onClick={() => onSelectJobForDetail(job)}
                           className="text-xs font-bold text-slate-900 hover:text-blue-600 cursor-pointer line-clamp-1"
                         >
                           {job.title}
                         </h4>
-
                         <p className="text-[11px] text-slate-500">
                           {job.company} • {job.salary}
                         </p>
                       </div>
                     </div>
-
                     <button
-                      onClick={() =>
-                        onSelectJobForApply(job)
-                      }
+                      onClick={() => onSelectJobForApply(job)}
                       className="px-2.5 py-1 rounded-lg bg-blue-600 text-white text-[11px] font-bold hover:bg-blue-700"
                     >
                       تقدم
@@ -1109,12 +890,10 @@ export const FeedView: React.FC<FeedViewProps> = ({
 
         {/* Skills */}
         <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 space-y-3">
-
           <div className="flex items-center gap-2 font-bold text-sm text-slate-900">
             <TrendingUp className="w-4 h-4 text-blue-600" />
             <span>أكثر المهارات طلباً</span>
           </div>
-
           <div className="flex flex-wrap gap-1.5">
             {[
               'React.js',
