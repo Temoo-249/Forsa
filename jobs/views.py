@@ -5,7 +5,7 @@ from .models import Job, Application, SavedJob
 from .serializers import JobSerializer, ApplicationSerializer, JobApplicantSerializer
 from accounts.models import User
 import uuid
-
+from companies.models import Company
 class JobListCreateView(views.APIView):
     def get(self, request):
         queryset = Job.objects.all().order_by('-created_at')
@@ -124,13 +124,28 @@ class ApplicationListView(views.APIView):
         apps = Application.objects.filter(user=user).order_by('-created_at')
         return Response(ApplicationSerializer(apps, many=True).data)
 
+
 class EmployerApplicantsView(views.APIView):
     def get(self, request):
-        # Return all applicants for employer dashboard
-        apps = Application.objects.all().order_by('-created_at')
+        # جيب المستخدم الحالي
+        user = request.user if request.user.is_authenticated else User.objects.first()
+        if not user:
+            return Response({'detail': 'No user'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # جيب شركة المستخدم
+        company = Company.objects.filter(user=user).first()
+        if not company:
+            return Response([])
+
+        # جيب وظائف الشركة
+        jobs = Job.objects.filter(company_ref=company)
+        
+        # جيب التقديمات على وظائف الشركة بس
+        apps = Application.objects.filter(job__in=jobs).order_by('-created_at')
         return Response(JobApplicantSerializer(apps, many=True).data)
 
     def patch(self, request, pk):
+   
         try:
             app = Application.objects.get(id=pk)
         except Application.DoesNotExist:

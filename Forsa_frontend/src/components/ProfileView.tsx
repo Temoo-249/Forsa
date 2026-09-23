@@ -40,6 +40,7 @@ interface ProfileViewProps {
   onSetDefaultCV: (id: string) => void;
   onDeleteCV: (id: string) => void;
   currentUser?: AuthUser;
+  
   onLogout?: () => void;
 }
 
@@ -75,6 +76,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const userPhone = (currentUser as any)?.phone || '';
   const userLinkedin = (currentUser as any)?.linkedin || '';
   const userPortfolio = (currentUser as any)?.portfolio || '';
+  console.log('🔍 Current User in ProfileView:', currentUser);
   const hasSocialLinks = userEmail || userPhone || userLinkedin || userPortfolio;
 
 
