@@ -27,6 +27,8 @@ import {
 } from 'lucide-react';
 import { AuthUser } from '../types';
 
+import { useApp } from '../context/AppContext';
+
 interface ProfileViewProps {
   skills: SkillItem[];
   onAddSkill: (skill: Omit<SkillItem, 'id'>) => void;
@@ -882,7 +884,7 @@ const openEditModal = () => {
   );
 };
 
-function useApp(): {
+/*function useApp(): {
   handleUpdateProfile: (profile: {
     name: string;
     headline: string;
@@ -918,3 +920,4 @@ function useApp(): {
 
   return { handleUpdateProfile };
 }
+*/
