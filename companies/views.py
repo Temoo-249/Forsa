@@ -31,13 +31,23 @@ class CompanyDetailView( APIView):
         return Response(CompanySerializer(company).data)
 
     def patch(self, request, pk):
-        try:
-            company = Company.objects.get(id=pk)
-        except Company.DoesNotExist:
-            return Response({'detail': 'Company not found'}, status=status.HTTP_404_NOT_FOUND)
+     try:
+        company = Company.objects.get(id=pk)
+     except Company.DoesNotExist:
+        return Response({'detail': 'Company not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = CompanySerializer(company, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    # احفظ الاسم القديم قبل التعديل
+    old_name = company.name
+
+    serializer = CompanySerializer(company, data=request.data, partial=True)
+    if serializer.is_valid():
+        updated_company = serializer.save()
+
+        # لو الاسم اتغير، حدث اسم الشركة في كل الوظائف المرتبطة
+        new_name = updated_company.name
+        if old_name and new_name and old_name != new_name:
+            from jobs.models import Job
+            Job.objects.filter(company=old_name).update(company=new_name)
+
+        return Response(serializer.data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
