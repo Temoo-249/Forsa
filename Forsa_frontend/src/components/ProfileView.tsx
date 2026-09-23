@@ -167,7 +167,15 @@ const openEditModal = () => {
           
           <div className="absolute top-4 left-4 flex items-center gap-2">
             <button
-              onClick={() => alert('تم نسخ رابط ملفك الشخصي')}
+              onClick={async () => {
+                      try {
+                  const url = `${window.location.origin}/profile`;
+                await navigator.clipboard.writeText(url);
+                 alert('✓ تم نسخ رابط ملفك الشخصي');
+                  } catch {
+                  alert('تعذر نسخ الرابط');
+                      }
+                     }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/20 backdrop-blur-md hover:bg-white/30 text-white text-xs font-bold transition-colors border border-white/20"
             >
               <Share2 className="w-3.5 h-3.5" />
@@ -199,14 +207,20 @@ const openEditModal = () => {
 
             <div className="flex flex-wrap items-center gap-2.5">
               <button
-                onClick={() => {
-                  const defaultCV = cvFiles.find(f => f.isDefault);
-                  if (defaultCV) {
-                    alert(`جاري تنزيل ${defaultCV.name}`);
-                  } else {
+               onClick={() => {
+                 const defaultCV = cvFiles.find(f => f.isDefault);
+                 if (!defaultCV) {
                   alert('لا توجد سيرة ذاتية محفوظة. قم برفع ملف أولاً.');
+                    return;
+                       }
+                     const cvAny = defaultCV as any;
+                       if (cvAny.file) {
+                    // الملف متاح للتحميل
+                      window.open(cvAny.file, '_blank');
+                    } else {
+                 alert(`الملف: ${defaultCV.name}\n(الملف الأصلي غير متاح للتحميل حاليًا)`);
                    }
-                }}
+                   }}
                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-bold transition-colors border border-slate-200"
               >
                 <Download className="w-4 h-4 text-blue-600" />
