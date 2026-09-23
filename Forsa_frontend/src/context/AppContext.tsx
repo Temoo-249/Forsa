@@ -746,16 +746,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
  const handleUpdateCompany = useCallback(async (updatedCompany: Company): Promise<boolean> => {
   try {
-    const saved = await companiesAPI.updateCompany(updatedCompany.id, updatedCompany);
+    let saved: Company | null;
+
+    if (!updatedCompany.id || updatedCompany.id === '') {
+      // مفيش شركة — اعملها
+      saved = await companiesAPI.createCompany(updatedCompany);
+    } else {
+      saved = await companiesAPI.updateCompany(updatedCompany.id, updatedCompany);
+    }
 
     if (!saved) {
       showToast('تعذر حفظ بيانات الشركة', 'تأكد من الاتصال بالـ Backend');
       return false;
     }
 
-    setCompanies(prev => prev.map(c => c.id === saved.id ? saved : c));
+    setCompanies(prev => {
+      const exists = prev.find(c => c.id === saved!.id);
+      if (exists) {
+        return prev.map(c => c.id === saved!.id ? saved! : c);
+      }
+      return [saved!, ...prev];
+    });
     setMyEmployerCompany(saved);
-    showToast('تم حفظ وتحديث بيانات الشركة بنجاح ✓');
+    showToast('تم حفظ بيانات الشركة بنجاح ✓');
     return true;
   } catch (error) {
     console.error('Update company error:', error);

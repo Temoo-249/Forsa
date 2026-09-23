@@ -8,6 +8,9 @@ import uuid
 from companies.models import Company
 
 
+import uuid
+from companies.models import Company
+
 class RegisterView(views.APIView):
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
@@ -16,14 +19,13 @@ class RegisterView(views.APIView):
 
             # إذا كان صاحب عمل، اعمل شركة مربوطة بيه
             if user.role == 'employer':
-                company_name = user.company_name or f"شركة {user.get_full_name() or user.username}"
                 Company.objects.get_or_create(
                     user=user,
                     defaults={
                         'id': f"company-{uuid.uuid4().hex[:12]}",
-                        'name': company_name,
+                        'name': user.company_name or f"شركة {user.get_full_name() or user.username}",
                         'industry': 'التكنولوجيا',
-                        'location': user.location or 'الخرطوم',
+                        'location': user.location or 'الرياض',
                         'description': '',
                         'tagline': '',
                         'logo': '🏢',

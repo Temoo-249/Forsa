@@ -11,11 +11,17 @@ class CompanyListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user if self.request.user.is_authenticated else None
-        # لو صاحب عمل، رجّع شركته بس
         if user and user.role == 'employer':
             return Company.objects.filter(user=user).order_by('-created_at')
-        # غير كده، رجّع كل الشركات
         return Company.objects.all().order_by('-created_at')
+
+    def perform_create(self, serializer):
+        import uuid
+        user = self.request.user if self.request.user.is_authenticated else None
+        serializer.save(
+            user=user,
+            id=f"company-{uuid.uuid4().hex[:12]}"
+        )
 class CompanyDetailView( APIView):
     def get(self, request, pk):
         try:

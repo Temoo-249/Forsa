@@ -305,6 +305,23 @@ export const companiesAPI = {
     return null;
   }
 },
+async createCompany(data: Partial<Company>): Promise<Company | null> {
+  try {
+    const res = await fetch(API_BASE + '/companies/', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      console.error('Create company failed:', await res.text());
+      return null;
+    }
+    return await res.json();
+  } catch (e) {
+    console.error('Failed to create company', e);
+    return null;
+  }
+},
 };
 
 // 5. Posts (Feed) APIs
