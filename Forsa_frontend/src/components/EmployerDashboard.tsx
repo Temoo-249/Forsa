@@ -41,7 +41,7 @@ interface EmployerDashboardProps {
   onUpdateApplicantStatus: (applicantId: string, status: ApplicationStatus) => void;
   onScheduleInterview: (applicantId: string, interviewDate: string) => void;
   onContactCandidate: (applicant: JobApplicant) => void;
-  onUpdateCompany: (updatedCompany: Company) => void;
+  onUpdateCompany: (updatedCompany: Company) => Promise<boolean>;
   onDeleteJob: (jobId: string) => void;
   onToggleJobStatus: (jobId: string) => void;
   onSwitchToSeeker: () => void;
@@ -105,13 +105,14 @@ export const EmployerDashboard: React.FC<EmployerDashboardProps> = ({
   const inInterviewCount = applicants.filter(a => a.status === 'المقابلة' || a.status === 'الاختصار').length;
   const hiredOrOfferedCount = applicants.filter(a => a.status === 'العرض' || a.status === 'التوظيف').length;
 
-  const handleSaveCompanyProfile = (e: React.FormEvent) => {
-    e.preventDefault();
-    onUpdateCompany(editedCompany);
+  const handleSaveCompanyProfile = async (e: React.FormEvent) => {
+  e.preventDefault();
+  const success = await onUpdateCompany(editedCompany);
+  if (success) {
     setIsSavedProfileSuccess(true);
     setTimeout(() => setIsSavedProfileSuccess(false), 3500);
-  };
-
+  }
+};
   return (
     <div className="space-y-8 animate-in fade-in duration-200" dir="rtl">
       
