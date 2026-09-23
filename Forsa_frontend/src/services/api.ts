@@ -402,27 +402,24 @@ export const postsAPI = {
 
   // حذف تعليق. صلاحية الحذف يجب أن تُفرض أيضاً من Django.
   async deleteComment(commentId: string): Promise<void> {
-    try {
-      const res = await fetch(API_BASE + '/comments/' + commentId + '/', {
-        method: 'DELETE',
-        headers: getAuthHeaders()
-      });
-
-      if (!res.ok) {
-        let detail = 'Failed to delete comment';
-        try {
-          const data = await res.json();
-          detail = data?.detail || detail;
-        } catch {
-          // DELETE قد يرجع بدون JSON.
-        }
-        throw new Error(detail);
-      }
-    } catch (e) {
-      console.error('Failed to delete comment', e);
-      throw e;
+  try {
+    const res = await fetch(API_BASE + '/posts/comments/' + commentId + '/', {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) {
+      let detail = 'Failed to delete comment';
+      try {
+        const data = await res.json();
+        detail = data?.detail || detail;
+      } catch {}
+      throw new Error(detail);
     }
+  } catch (e) {
+    console.error('Failed to delete comment', e);
+    throw e;
   }
+}
 };
 
 // 6. Chat & Conversations APIs
