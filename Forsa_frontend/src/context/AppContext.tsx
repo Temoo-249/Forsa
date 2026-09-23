@@ -146,7 +146,7 @@ interface AppContextType {
   companies: Company[];
   employerApplicants: JobApplicant[];
   myEmployerCompany: Company;
-  handlePostJob: (job: Job) => void;
+ handlePostJob: (job: Job) => Promise<void>;
   handleUpdateApplicantStatus: (applicantId: string, status: ApplicationStatus) => void;
   handleScheduleInterview: (applicantId: string, interviewDate: string) => void;
   handleContactCandidate: (applicant: JobApplicant) => void;
@@ -671,18 +671,36 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [showToast]);
 
   // ── Employer & Companies ──
-  const handlePostJob = useCallback((newJob: Job) => {
-    jobsAPI.createJob(newJob);
-    setJobs(prev => [newJob, ...prev]);
+ const handlePostJob = useCallback(async (newJob: Job) => {
+  try {
+    const savedJob = await jobsAPI.createJob(newJob);
+
+    if (!savedJob || !savedJob.id) {
+      showToast('تعذر نشر الوظيفة', 'تأكد من البيانات وحاول مرة أخرى');
+      return;
+    }
+
+    // استخدم بيانات الباك إند (بالـ ID الحقيقي)
+    setJobs(prev => [savedJob, ...prev]);
     setCompanies(prev => prev.map(c => {
-      if (c.name.trim().toLowerCase() === newJob.company.trim().toLowerCase()) {
+      if (c.name.trim().toLowerCase() === savedJob.company?.trim().toLowerCase()) {
         return { ...c, openJobsCount: c.openJobsCount + 1 };
       }
       return c;
     }));
-    setMyEmployerCompany(prev => ({ ...prev, openJobsCount: prev.openJobsCount + 1 }));
-    showToast(`تم نشر وظيفة "${newJob.title}" بنجاح!`, 'تظهر الآن للباحثين عن عمل في استكشاف الوظائف.');
-  }, [showToast]);
+    setMyEmployerCompany(prev => ({
+      ...prev,
+      openJobsCount: prev.openJobsCount + 1
+    }));
+    showToast(
+      `تم نشر وظيفة "${savedJob.title}" بنجاح!`,
+      'تظهر الآن للباحثين عن عمل في استكشاف الوظائف.'
+    );
+  } catch (error) {
+    console.error('Post job error:', error);
+    showToast('تعذر نشر الوظيفة', 'تأكد من الاتصال بالـ Backend');
+  }
+}, [showToast]);
 
   const handleUpdateApplicantStatus = useCallback((applicantId: string, status: ApplicationStatus) => {
     applicationsAPI.updateApplicantStatus(applicantId, { status });

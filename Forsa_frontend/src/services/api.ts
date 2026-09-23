@@ -194,19 +194,23 @@ export const jobsAPI = {
     }
   },
 
-  async createJob(jobData: Partial<Job>): Promise<Job | null> {
-    try {
-      const res = await fetch(API_BASE + '/jobs/', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(jobData)
-      });
-      return res.ok ? await res.json() : null;
-    } catch (e) {
-      console.error('Failed to post job to backend', e);
+ async createJob(jobData: Partial<Job>): Promise<Job | null> {
+  try {
+    const res = await fetch(API_BASE + '/jobs/', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(jobData)
+    });
+    if (!res.ok) {
+      console.error('Create job failed:', res.status, await res.text());
       return null;
     }
-  },
+    return await res.json();
+  } catch (e) {
+    console.error('Failed to post job to backend', e);
+    return null;
+  }
+},
 
   async toggleSave(jobId: string): Promise<{ isSaved: boolean } | null> {
     try {
