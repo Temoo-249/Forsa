@@ -5,11 +5,12 @@ from .models import Company
 from .serializers import CompanySerializer
 from accounts.models import User
 
+
 class CompanyListCreateView(generics.ListCreateAPIView):
     queryset = Company.objects.all().order_by('-created_at')
     serializer_class = CompanySerializer
 
-class CompanyDetailView(views.APIView):
+class CompanyDetailView( APIView):
     def get(self, request, pk):
         try:
             company = Company.objects.get(id=pk)
