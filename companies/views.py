@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from .models import Company
 from .serializers import CompanySerializer
 from accounts.models import User
+from jobs.models import Job
 
 
 class CompanyListCreateView(generics.ListCreateAPIView):
@@ -22,7 +23,9 @@ class CompanyListCreateView(generics.ListCreateAPIView):
             user=user,
             id=f"company-{uuid.uuid4().hex[:12]}"
         )
-class CompanyDetailView( APIView):
+
+
+class CompanyDetailView(APIView):
     def get(self, request, pk):
         try:
             company = Company.objects.get(id=pk)
@@ -31,23 +34,20 @@ class CompanyDetailView( APIView):
         return Response(CompanySerializer(company).data)
 
     def patch(self, request, pk):
-     try:
-        company = Company.objects.get(id=pk)
-     except Company.DoesNotExist:
-        return Response({'detail': 'Company not found'}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            company = Company.objects.get(id=pk)
+        except Company.DoesNotExist:
+            return Response({'detail': 'Company not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    # احفظ الاسم القديم قبل التعديل
-    old_name = company.name
+        old_name = company.name
+        serializer = CompanySerializer(company, data=request.data, partial=True)
+        if serializer.is_valid():
+            updated_company = serializer.save()
 
-    serializer = CompanySerializer(company, data=request.data, partial=True)
-    if serializer.is_valid():
-        updated_company = serializer.save()
+            new_name = updated_company.name
+            if old_name and new_name and old_name != new_name:
+                Job.objects.filter(company=old_name).update(company=new_name)
 
-        # لو الاسم اتغير، حدث اسم الشركة في كل الوظائف المرتبطة
-        new_name = updated_company.name
-        if old_name and new_name and old_name != new_name:
-            from jobs.models import Job
-            Job.objects.filter(company=old_name).update(company=new_name)
+            return Response(serializer.data)
 
-        return Response(serializer.data)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
