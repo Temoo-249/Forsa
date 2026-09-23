@@ -150,7 +150,7 @@ interface AppContextType {
   handleUpdateApplicantStatus: (applicantId: string, status: ApplicationStatus) => void;
   handleScheduleInterview: (applicantId: string, interviewDate: string) => void;
   handleContactCandidate: (applicant: JobApplicant) => void;
-  handleUpdateCompany: (updatedCompany: Company) => void;
+  handleUpdateCompany: (updatedCompany: Company) => Promise<void>;
   handleDeleteJob: (jobId: string) => void;
   handleToggleJobStatus: (jobId: string) => void;
 
@@ -744,11 +744,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     showToast(`تم فتح المحادثة مع المرشح ${applicant.candidateName}`);
   }, [conversations, navigate, showToast]);
 
-  const handleUpdateCompany = useCallback((updatedCompany: Company) => {
-    setCompanies(prev => prev.map(c => c.id === updatedCompany.id ? updatedCompany : c));
-    setMyEmployerCompany(updatedCompany);
-    showToast('تم حفظ وتحديث بيانات الشركة بنجاح');
-  }, [showToast]);
+ const handleUpdateCompany = useCallback(async (updatedCompany: Company) => {
+  try {
+    const saved = await companiesAPI.updateCompany(updatedCompany.id, updatedCompany);
+
+    if (!saved) {
+      showToast('تعذر حفظ بيانات الشركة', 'تأكد من الاتصال بالـ Backend');
+      return;
+    }
+
+    setCompanies(prev => prev.map(c => c.id === saved.id ? saved : c));
+    setMyEmployerCompany(saved);
+    showToast('تم حفظ وتحديث بيانات الشركة بنجاح ✓');
+  } catch (error) {
+    console.error('Update company error:', error);
+    showToast('تعذر حفظ التعديلات', 'حاول مرة أخرى');
+  }
+}, [showToast]);
 
   const handleDeleteJob = useCallback((jobId: string) => {
     const jobToDelete = jobs.find(j => j.id === jobId);

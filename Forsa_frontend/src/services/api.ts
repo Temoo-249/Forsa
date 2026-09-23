@@ -287,7 +287,24 @@ export const companiesAPI = {
       console.warn('Companies API unreachable, using fallback', e);
       return fallback;
     }
+  },
+  async updateCompany(companyId: string, data: Partial<Company>): Promise<Company | null> {
+  try {
+    const res = await fetch(API_BASE + '/companies/' + companyId + '/', {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      console.error('Update company failed:', await res.text());
+      return null;
+    }
+    return await res.json();
+  } catch (e) {
+    console.error('Failed to update company', e);
+    return null;
   }
+},
 };
 
 // 5. Posts (Feed) APIs
