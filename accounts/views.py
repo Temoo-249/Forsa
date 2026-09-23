@@ -4,18 +4,38 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from .models import User, Skill, Experience, Education, CVFile
 from .serializers import UserSerializer, RegisterSerializer, SkillSerializer, ExperienceSerializer, EducationSerializer, CVFileSerializer
+import uuid
+from companies.models import Company
+
 
 class RegisterView(views.APIView):
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
+
+            # إذا كان صاحب عمل، اعمل شركة مربوطة بيه
+            if user.role == 'employer':
+                company_name = user.company_name or f"شركة {user.get_full_name() or user.username}"
+                Company.objects.get_or_create(
+                    user=user,
+                    defaults={
+                        'id': f"company-{uuid.uuid4().hex[:12]}",
+                        'name': company_name,
+                        'industry': 'التكنولوجيا',
+                        'location': user.location or 'الخرطوم',
+                        'description': '',
+                        'tagline': '',
+                        'logo': '🏢',
+                        'cover_gradient': 'from-blue-600 to-indigo-600',
+                    }
+                )
+
             token, _ = Token.objects.get_or_create(user=user)
             userData = UserSerializer(user).data
             userData['token'] = token.key
             return Response(userData, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 class LoginView(views.APIView):
     def post(self, request):
         email_or_username = request.data.get('email') or request.data.get('username')

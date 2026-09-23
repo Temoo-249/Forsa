@@ -7,9 +7,15 @@ from accounts.models import User
 
 
 class CompanyListCreateView(generics.ListCreateAPIView):
-    queryset = Company.objects.all().order_by('-created_at')
     serializer_class = CompanySerializer
 
+    def get_queryset(self):
+        user = self.request.user if self.request.user.is_authenticated else None
+        # لو صاحب عمل، رجّع شركته بس
+        if user and user.role == 'employer':
+            return Company.objects.filter(user=user).order_by('-created_at')
+        # غير كده، رجّع كل الشركات
+        return Company.objects.all().order_by('-created_at')
 class CompanyDetailView( APIView):
     def get(self, request, pk):
         try:
