@@ -23,7 +23,7 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         fields = [
             'id', 'authorName', 'authorHeadline', 'authorAvatar', 'avatarColor',
-            'timeAgo', 'content', 'skills', 'likes', 'comments', 'isLiked', 'category'
+            'timeAgo', 'content', 'skills', 'likes', 'comments', 'isLiked', 'category', 'image'
         ]
 
     def get_isLiked(self, obj):

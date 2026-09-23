@@ -299,7 +299,7 @@ export const postsAPI = {
     }
   },
 
-  async createPost(postData: { content: string; skills: string[]; category: string }): Promise<Post | null> {
+  async createPost(postData: { content: string; skills: string[]; category: string; image?: string | null }): Promise<Post | null> {
     try {
       const res = await fetch(API_BASE + '/posts/', {
         method: 'POST',

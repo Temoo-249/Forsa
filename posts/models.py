@@ -10,6 +10,7 @@ class Post(models.Model):
     )
     id = models.CharField(max_length=100, primary_key=True)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='posts')
+    image = models.TextField(blank=True, null=True)
     author_name = models.CharField(max_length=255)
     author_headline = models.TextField(blank=True)
     author_avatar = models.CharField(max_length=255, default='أر')

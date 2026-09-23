@@ -78,6 +78,8 @@ export const FeedView: React.FC<FeedViewProps> = ({
   const [postContent, setPostContent] = useState('');
   const [postCategory, setPostCategory] =
     useState<'عام' | 'عرض مهارات' | 'إنجاز' | 'سؤال'>('عام');
+  const [postImage, setPostImage] = useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const [skillInput, setSkillInput] = useState('');
   const [skillsList, setSkillsList] = useState<string[]>([]);
@@ -121,27 +123,30 @@ export const FeedView: React.FC<FeedViewProps> = ({
   );
 
   const handleCreatePost = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const content = postContent.trim();
+  const content = postContent.trim();
 
-    if (!content) return;
+  if (!content) return;
 
-    await onAddPost({
-      authorName: userName,
-      authorHeadline: userHeadline,
-      authorAvatar: userAvatar,
-      avatarColor: 'bg-blue-600',
-      content,
-      skills: [...skillsList],
-      category: postCategory,
-    });
+  await onAddPost({
+    authorName: userName,
+    authorHeadline: userHeadline,
+    authorAvatar: userAvatar,
+    avatarColor: 'bg-blue-600',
+    content,
+    skills: [...skillsList],
+    category: postCategory,
+    image: postImage,
+  } as any);
 
-    setPostContent('');
-    setSkillInput('');
-    setSkillsList([]);
-    setPostCategory('عام');
-  };
+  setPostContent('');
+  setSkillInput('');
+  setSkillsList([]);
+  setPostCategory('عام');
+  setPostImage(null);
+};
+
 
   const addSkill = () => {
     const value = skillInput.trim();
@@ -266,7 +271,7 @@ export const FeedView: React.FC<FeedViewProps> = ({
 
     try {
       await onDeleteComment(postId, commentId);
-      
+
       setComments((prev) => ({
         ...prev,
         [postId]: (prev[postId] || []).filter(
@@ -446,17 +451,53 @@ export const FeedView: React.FC<FeedViewProps> = ({
               </button>
             )}
           </div>
-
+                {/* معاينة الصورة */}
+{postImage && (
+  <div className="relative inline-block">
+    <img
+      src={postImage}
+      alt="preview"
+      className="max-h-48 rounded-xl border border-slate-200"
+    />
+    <button
+      type="button"
+      onClick={() => setPostImage(null)}
+      className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-rose-600 text-white text-sm font-bold shadow-md hover:bg-rose-700"
+    >
+      ✕
+    </button>
+  </div>
+)}
           <div className="flex items-center justify-between pt-3 border-t border-slate-100">
 
             <div className="flex items-center gap-2">
               <button
-                type="button"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-100 text-xs font-semibold"
-              >
-                <ImageIcon className="w-4 h-4 text-blue-600" />
-                صورة
-              </button>
+                    type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-100 text-xs font-semibold"
+>
+                    <ImageIcon className="w-4 h-4 text-blue-600" />
+                    صورة
+                    </button>
+
+                      <input
+                            ref={fileInputRef}
+                        type="file"
+                       accept="image/*"
+                 className="hidden"
+                         onChange={(e) => {
+                    const file = e.target.files?.[0];
+                      if (file) {
+                      if (file.size > 5 * 1024 * 1024) {
+                              alert('حجم الصورة كبير جدًا، الحد الأقصى 5 ميجابايت');
+                               return;
+                            }
+                          const reader = new FileReader();
+                      reader.onload = () => setPostImage(reader.result as string);
+                       reader.readAsDataURL(file);
+                    }
+                    }}
+/>
 
               <button
                 type="button"
@@ -467,7 +508,22 @@ export const FeedView: React.FC<FeedViewProps> = ({
                 مهارات
               </button>
             </div>
-
+              {postImage && (
+                 <div className="relative inline-block">
+                    <img
+                             src={postImage}
+                      alt="preview"
+                        className="max-h-48 rounded-xl border border-slate-200"
+                         />
+                       <button
+                       type="button"
+                 onClick={() => setPostImage(null)}
+                      className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-rose-600 text-white text-sm font-bold shadow-md hover:bg-rose-700"
+                         >
+                       ✕
+                    </button>
+                </div>
+                  )}
             <button
               type="submit"
               disabled={!postContent.trim()}
@@ -555,7 +611,16 @@ export const FeedView: React.FC<FeedViewProps> = ({
                 <p className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line">
                   {post.content}
                 </p>
-
+                 {/* Post Image */}
+{(post as any).image && (
+  <div className="rounded-xl overflow-hidden border border-slate-200">
+    <img
+      src={(post as any).image}
+      alt="post"
+      className="w-full max-h-96 object-cover"
+    />
+  </div>
+)}
                 {/* Skills */}
                 {post.skills?.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">

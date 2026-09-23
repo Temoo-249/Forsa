@@ -416,11 +416,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   ) => {
     try {
       // مهم: نعتمد على ID الذي يرجعه الـ Backend حتى يظل المنشور قابلاً للحذف والتعديل لاحقاً.
-      const savedPost = await postsAPI.createPost({
-        content: newPostData.content,
-        skills: newPostData.skills,
-        category: newPostData.category || 'عام'
-      });
+     const savedPost = await postsAPI.createPost({
+  content: newPostData.content,
+  skills: newPostData.skills,
+  category: newPostData.category || 'عام',
+  image: (newPostData as any).image || null,
+});
 
       if (!savedPost || !savedPost.id) {
         throw new Error('The backend did not return the created post.');

@@ -28,13 +28,14 @@ class PostListCreateView(views.APIView):
             id=f"post-{uuid.uuid4().hex[:6]}",
             author=user,
             author_name=user.get_full_name() or user.username,
-            author_headline=user.headline or 'مطور برمجيات',
+            author_headline=user.headline or 'مستخدم ',
             author_avatar=user.avatar,
             avatar_color='from-blue-600 to-indigo-600',
             content=content,
             skills=skills,
             likes_count=0,
             comments_count=0,
+            image=request.data.get('image') or None,
             category=category
         )
         return Response(
