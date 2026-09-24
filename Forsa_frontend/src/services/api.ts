@@ -6,7 +6,8 @@ import {
   NotificationItem, 
   Company, 
   JobApplicant,
-  AuthUser
+  AuthUser,
+  PublicProfile
 } from '../types';
 
 // Vercel exposes only NEXT_PUBLIC_* values to the browser. The existing
@@ -536,5 +537,28 @@ export const notificationsAPI = {
       console.error('Failed to mark notifications read', e);
       return false;
     }
+  }
+};
+
+export const profilesAPI = {
+  async getProfile(id: string): Promise<PublicProfile | null> {
+    try {
+      const res = await fetch(`${API_BASE}/auth/profiles/${id}/`, { headers: getAuthHeaders() });
+      return res.ok ? await res.json() : null;
+    } catch { return null; }
+  },
+  async toggleFollow(id: string): Promise<{ isFollowing: boolean; followersCount: number } | null> {
+    try {
+      const res = await fetch(`${API_BASE}/auth/profiles/${id}/follow/`, { method: 'POST', headers: getAuthHeaders() });
+      return res.ok ? await res.json() : null;
+    } catch { return null; }
+  },
+  async contact(id: string, offer?: { jobTitle: string; salary?: string; startDate?: string; message?: string }): Promise<Conversation | null> {
+    try {
+      const res = await fetch(`${API_BASE}/conversations/profiles/${id}/`, {
+        method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(offer ? { offer } : {})
+      });
+      return res.ok ? await res.json() : null;
+    } catch { return null; }
   }
 };

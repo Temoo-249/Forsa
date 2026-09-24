@@ -96,6 +96,7 @@ export interface Application {
 
 export interface Post {
   id: string;
+  authorId?: string;
   authorName: string;
   authorHeadline: string;
   authorAvatar: string;
@@ -107,6 +108,21 @@ export interface Post {
   comments: number;
   isLiked?: boolean;
   category?: 'عام' | 'عرض مهارات' | 'إنجاز' | 'سؤال';
+}
+
+export interface PublicProfile {
+  id: string;
+  name: string;
+  role: UserRole;
+  headline: string;
+  avatar: string;
+  location?: string;
+  bio?: string;
+  followersCount: number;
+  followingCount: number;
+  isFollowing: boolean;
+  skills: SkillItem[];
+  experiences: ExperienceItem[];
 }
 
 export interface Message {

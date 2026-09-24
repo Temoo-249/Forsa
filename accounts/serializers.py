@@ -52,6 +52,21 @@ class UserSerializer(serializers.ModelSerializer):
     def get_isLoggedIn(self, obj):
         return True
 
+
+class PublicProfileSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+    followersCount = serializers.IntegerField(source='follower_relations.count', read_only=True)
+    followingCount = serializers.IntegerField(source='following_relations.count', read_only=True)
+    skills = SkillSerializer(many=True, read_only=True)
+    experiences = ExperienceSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['id', 'name', 'role', 'headline', 'avatar', 'location', 'bio', 'followersCount', 'followingCount', 'skills', 'experiences']
+
+    def get_name(self, obj):
+        return obj.get_full_name() or obj.username
+
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     email = serializers.EmailField()

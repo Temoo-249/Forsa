@@ -12,6 +12,7 @@ class PostCommentSerializer(serializers.ModelSerializer):
 from django.utils import timezone
 
 class PostSerializer(serializers.ModelSerializer):
+    authorId = serializers.UUIDField(source='author_id', read_only=True)
     authorName = serializers.CharField(source='author_name', required=False)
     authorHeadline = serializers.CharField(source='author_headline', required=False)
     authorAvatar = serializers.CharField(source='author_avatar', required=False)
@@ -41,7 +42,7 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = [
-            'id', 'authorName', 'authorHeadline', 'authorAvatar', 'avatarColor',
+            'id', 'authorId', 'authorName', 'authorHeadline', 'authorAvatar', 'avatarColor',
             'timeAgo', 'content', 'skills', 'likes', 'comments', 'isLiked', 'category', 'image'
         ]
 

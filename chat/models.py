@@ -4,6 +4,7 @@ from django.conf import settings
 class Conversation(models.Model):
     id = models.CharField(max_length=100, primary_key=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='conversations')
+    peer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='received_conversations', null=True, blank=True)
     company_name = models.CharField(max_length=255)
     company_logo = models.CharField(max_length=255, default='💼')
     last_message = models.TextField(blank=True)

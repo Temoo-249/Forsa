@@ -2,8 +2,8 @@ from rest_framework import status, views, permissions
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
-from .models import User, Skill, Experience, Education, CVFile
-from .serializers import UserSerializer, RegisterSerializer, SkillSerializer, ExperienceSerializer, EducationSerializer, CVFileSerializer
+from .models import User, Skill, Experience, Education, CVFile, Follow
+from .serializers import UserSerializer, RegisterSerializer, SkillSerializer, ExperienceSerializer, EducationSerializer, CVFileSerializer, PublicProfileSerializer
 import uuid
 from companies.models import Company
 
@@ -147,4 +147,35 @@ class UserResumeDetailView(views.APIView):
             return Response(CVFileSerializer(cv).data)
         except CVFile.DoesNotExist:
             return Response({'detail': 'Resume not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class PublicProfileView(views.APIView):
+    """Public, privacy-safe profile for job seekers only."""
+    def get(self, request, pk):
+        try:
+            user = User.objects.get(id=pk, role='seeker', is_active=True)
+        except User.DoesNotExist:
+            return Response({'detail': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
+        data = PublicProfileSerializer(user).data
+        data['isFollowing'] = bool(request.user.is_authenticated and Follow.objects.filter(follower=request.user, following=user).exists())
+        return Response(data)
+
+
+class ToggleFollowView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            target = User.objects.get(id=pk, role='seeker', is_active=True)
+        except User.DoesNotExist:
+            return Response({'detail': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
+        if target.id == request.user.id:
+            return Response({'detail': 'You cannot follow yourself'}, status=status.HTTP_400_BAD_REQUEST)
+        relation = Follow.objects.filter(follower=request.user, following=target).first()
+        if relation:
+            relation.delete()
+            return Response({'isFollowing': False, 'followersCount': Follow.objects.filter(following=target).count()})
+        Follow.objects.create(follower=request.user, following=target)
+        return Response({'isFollowing': True, 'followersCount': Follow.objects.filter(following=target).count()})
+
 

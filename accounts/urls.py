@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     RegisterView, LoginView, CurrentUserView,
     UserSkillsView, UserExperienceView, UserEducationView, UserResumesView,
-    UserResumeDetailView
+    UserResumeDetailView, PublicProfileView, ToggleFollowView
 )
 
 urlpatterns = [
@@ -14,4 +14,6 @@ urlpatterns = [
     path('education/', UserEducationView.as_view(), name='user_education'),
     path('resumes/', UserResumesView.as_view(), name='user_resumes'),
     path('resumes/<int:pk>/', UserResumeDetailView.as_view(), name='user_resume_detail'),
+    path('profiles/<uuid:pk>/', PublicProfileView.as_view(), name='public_profile'),
+    path('profiles/<uuid:pk>/follow/', ToggleFollowView.as_view(), name='toggle_follow'),
 ]

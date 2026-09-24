@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { Post, Job, TabType } from '../types';
 import { useApp } from '../context/AppContext';
 import {
@@ -440,9 +441,7 @@ export const FeedView: React.FC<FeedViewProps> = ({
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-sm text-slate-900">
-                          {post.authorName}
-                        </h4>
+                        {post.authorId ? <Link href={`/profiles/${post.authorId}`} className="font-bold text-sm text-slate-900 hover:text-blue-600 hover:underline">{post.authorName}</Link> : <h4 className="font-bold text-sm text-slate-900">{post.authorName}</h4>}
                         {post.category && (
                           <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700">
                             {post.category}
