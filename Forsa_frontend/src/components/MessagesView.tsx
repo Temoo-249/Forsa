@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Conversation, Message } from '../types';
 import { 
   Send, 
@@ -22,8 +22,8 @@ import {
 
 interface MessagesViewProps {
   conversations: Conversation[];
-  onSendMessage: (convId: string, text: string) => void;
-  onRespondOffer: (convId: string, messageId: string, accepted: boolean) => void;
+  onSendMessage: (convId: string, text: string) => Promise<void>;
+  onRespondOffer: (convId: string, messageId: string, accepted: boolean) => Promise<void>;
 }
 
 export const MessagesView: React.FC<MessagesViewProps> = ({
@@ -35,6 +35,14 @@ export const MessagesView: React.FC<MessagesViewProps> = ({
   const [inputText, setInputText] = useState('');
   const [searchConv, setSearchConv] = useState('');
   const [showDetailsSidebar, setShowDetailsSidebar] = useState(true);
+
+  useEffect(() => {
+    if (!conversations.length) {
+      setActiveConvId('');
+    } else if (!conversations.some(conversation => conversation.id === activeConvId)) {
+      setActiveConvId(conversations[0].id);
+    }
+  }, [activeConvId, conversations]);
 
   const activeConv = conversations.find(c => c.id === activeConvId) || conversations[0];
 
@@ -56,10 +64,10 @@ export const MessagesView: React.FC<MessagesViewProps> = ({
     );
   };
 
-  const handleSend = (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim() || !activeConv) return;
-    onSendMessage(activeConv.id, inputText.trim());
+    await onSendMessage(activeConv.id, inputText.trim());
     setInputText('');
   };
 

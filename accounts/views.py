@@ -74,10 +74,25 @@ class CurrentUserView(views.APIView):
 
     def patch(self, request):
         user = request.user
+        previous_role = user.role
         serializer = UserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
+            user = serializer.save()
+            if previous_role != 'employer' and user.role == 'employer':
+                Company.objects.get_or_create(
+                    user=user,
+                    defaults={
+                        'id': f"company-{uuid.uuid4().hex[:12]}",
+                        'name': user.company_name or f"شركة {user.get_full_name() or user.username}",
+                        'industry': 'التكنولوجيا',
+                        'location': user.location or 'الرياض',
+                        'description': '',
+                        'tagline': '',
+                        'logo': '🏢',
+                        'cover_gradient': 'from-blue-600 to-indigo-600',
+                    }
+                )
+            return Response(UserSerializer(user).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserSkillsView(views.APIView):

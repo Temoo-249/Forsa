@@ -132,7 +132,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
             role: role,
             headline: headline.trim() || (role === 'seeker' ? 'باحث عن عمل' : 'صاحب عمل'),
             avatar: name.trim().slice(0, 2) || 'فر',
-            companyName: companyName.trim()
+            companyName: companyName.trim(),
+            phone: phone.trim()
           });
           
           if (res) {

@@ -120,8 +120,9 @@ interface AppContextType {
 
   // Messages
   conversations: Conversation[];
-  handleSendMessage: (convId: string, text: string) => void;
-  handleRespondOffer: (convId: string, messageId: string, accepted: boolean) => void;
+  handleSendMessage: (convId: string, text: string) => Promise<void>;
+  handleRespondOffer: (convId: string, messageId: string, accepted: boolean) => Promise<void>;
+  upsertConversation: (conversation: Conversation) => void;
 
   // Notifications
   notifications: NotificationItem[];
@@ -332,12 +333,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     showToast('تم تسجيل الخروج بنجاح 👋', 'تم إنهاء الجلسة، يمكنك تسجيل الدخول في أي وقت');
   }, [navigate, showToast]);
 
-  const handleToggleRole = useCallback(() => {
+  const handleToggleRole = useCallback(async () => {
     const nextRole: UserRole = userRole === 'seeker' ? 'employer' : 'seeker';
-    setUserRole(nextRole);
-    if (currentUser) {
-      setCurrentUser(prev => prev ? { ...prev, role: nextRole } : null);
+    if (!currentUser) {
+      showToast('سجّل دخولك أولاً لتغيير نوع الحساب');
+      return;
     }
+    const saved = await authAPI.updateProfile({ role: nextRole });
+    if (!saved) {
+      showToast('تعذر تغيير نوع الحساب', 'حاول مرة أخرى');
+      return;
+    }
+    setUserRole(saved.role);
+    setCurrentUser(prev => prev ? { ...prev, ...saved } : saved);
     if (nextRole === 'employer' && currentTab === 'applications') {
       navigate('employer-hub');
     }
@@ -539,37 +547,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [showToast]);
 
   // ── Messages ──
-  const handleSendMessage = useCallback((convId: string, text: string) => {
-    chatAPI.sendMessage(convId, { text, sender: 'user' });
-
-    const now = new Date();
-    const timeStr = `${now.getHours() % 12 || 12}:${now.getMinutes().toString().padStart(2, '0')} ${now.getHours() >= 12 ? 'م' : 'ص'}`;
-
-    const newMsg = { id: `m-${Date.now()}`, sender: 'user' as const, text, time: timeStr };
-
+  const handleSendMessage = useCallback(async (convId: string, text: string) => {
+    const saved = await chatAPI.sendMessage(convId, { text });
+    if (!saved) {
+      showToast('تعذر إرسال الرسالة', 'تحقق من الاتصال ثم حاول مرة أخرى');
+      return;
+    }
     setConversations(prev => prev.map(conv => {
       if (conv.id === convId) {
-        return { ...conv, lastMessage: text, lastMessageTime: 'الآن', messages: [...conv.messages, newMsg] };
+        return { ...conv, lastMessage: saved.text || text, lastMessageTime: saved.time || 'الآن', messages: [...conv.messages, saved] };
       }
       return conv;
     }));
+  }, [showToast]);
 
-   
-  }, []);
-
-  const handleRespondOffer = useCallback((convId: string, messageId: string, accepted: boolean) => {
-    chatAPI.respondOffer(convId, messageId, accepted ? 'accept' : 'decline');
+  const handleRespondOffer = useCallback(async (convId: string, messageId: string, accepted: boolean) => {
+    const saved = await chatAPI.respondOffer(convId, messageId, accepted ? 'accept' : 'decline');
+    if (!saved) {
+      showToast('تعذر تحديث العرض', 'حاول مرة أخرى');
+      return;
+    }
 
     setConversations(prev => prev.map(c => {
       if (c.id === convId) {
         return {
           ...c,
-          messages: c.messages.map(m => {
-            if (m.id === messageId && m.offerDetails) {
-              return { ...m, offerDetails: { ...m.offerDetails, accepted, declined: !accepted } };
-            }
-            return m;
-          })
+          messages: c.messages.map(message => message.id === messageId ? saved : message)
         };
       }
       return c;
@@ -581,6 +584,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       showToast('تم تسجيل اعتذارك عن العرض الوظيفي');
     }
   }, [showToast]);
+
+  const upsertConversation = useCallback((conversation: Conversation) => {
+    setConversations(prev => {
+      const exists = prev.some(item => item.id === conversation.id);
+      return exists ? prev.map(item => item.id === conversation.id ? conversation : item) : [conversation, ...prev];
+    });
+  }, []);
 
   // ── Profile ──
   const handleAddSkill = useCallback(async (skill: Omit<SkillItem, 'id'>) => {
@@ -728,13 +738,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       showToast('تعذر فتح المحادثة', 'تحقق من الاتصال ثم حاول مرة أخرى');
       return;
     }
-    setConversations(prev => {
-      const exists = prev.some(item => item.id === conversation.id);
-      return exists ? prev.map(item => item.id === conversation.id ? conversation : item) : [conversation, ...prev];
-    });
+    upsertConversation(conversation);
     navigate('messages');
     showToast(`تم فتح المحادثة مع المرشح ${applicant.candidateName}`);
-  }, [navigate, showToast]);
+  }, [navigate, showToast, upsertConversation]);
 
  const handleUpdateCompany = useCallback(async (updatedCompany: Company): Promise<boolean> => {
   try {
@@ -804,7 +811,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     applications,
     posts, handleAddPost, handleLikePost, handleDeletePost,
     handleGetComments, handleAddComment, handleDeleteComment,
-    conversations, handleSendMessage, handleRespondOffer,
+    conversations, handleSendMessage, handleRespondOffer, upsertConversation,
     notifications, handleNotificationClick, handleMarkAllNotificationsRead,
     skills, handleAddSkill,
     experiences, handleAddExperience,
@@ -825,7 +832,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     applications,
     posts, handleAddPost, handleLikePost, handleDeletePost,
     handleGetComments, handleAddComment, handleDeleteComment,
-    conversations, handleSendMessage, handleRespondOffer,
+    conversations, handleSendMessage, handleRespondOffer, upsertConversation,
     notifications, handleNotificationClick, handleMarkAllNotificationsRead,
     skills, handleAddSkill,
     experiences, handleAddExperience,

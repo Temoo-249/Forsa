@@ -76,8 +76,13 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'role', 'headline', 'avatar', 'companyName', 'firstName', 'lastName']
+        fields = ['username', 'email', 'password', 'role', 'headline', 'avatar', 'companyName', 'phone', 'firstName', 'lastName']
         
+
+    def validate_email(self, value):
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError('يوجد حساب مسجل بهذا البريد الإلكتروني.')
+        return value
 
     def create(self, validated_data):
         password = validated_data.pop('password')

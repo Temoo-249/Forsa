@@ -31,3 +31,12 @@ class MessagingApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['sender'], 'company')
+
+    def test_employer_can_open_a_conversation_from_a_profile(self):
+        self.client.force_authenticate(self.employer)
+
+        response = self.client.post(f'/api/conversations/profiles/{self.seeker.id}/', {}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['id'], self.conversation.id)
+        self.assertEqual(Conversation.objects.filter(user=self.employer, peer=self.seeker).count(), 1)
