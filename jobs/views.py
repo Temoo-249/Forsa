@@ -39,8 +39,9 @@ class JobListCreateView(views.APIView):
         if request.user.role != 'employer':
             return Response({'detail': 'Only employers can create jobs'}, status=status.HTTP_403_FORBIDDEN)
         data = request.data.copy()
-        if 'id' not in data or not data['id']:
-            data['id'] = f"job-{uuid.uuid4().hex[:6]}"
+        # IDs are owned by the server so a client cannot overwrite or guess
+        # another employer's listing.
+        data['id'] = f"job-{uuid.uuid4().hex[:12]}"
         company = Company.objects.filter(user=request.user).first()
         if not company:
             return Response({'detail': 'Create your company profile before posting a job'}, status=status.HTTP_400_BAD_REQUEST)

@@ -40,3 +40,12 @@ class JobOwnershipTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertTrue(Job.objects.filter(id=self.job.id).exists())
+
+    def test_job_response_includes_immutable_company_and_owner_ids(self):
+        response = self.client.get('/api/jobs/')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        item = response.data[0]
+        self.assertEqual(item['id'], self.job.id)
+        self.assertEqual(item['companyId'], self.company.id)
+        self.assertEqual(item['ownerId'], str(self.owner.id))

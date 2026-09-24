@@ -2,6 +2,8 @@
 from .models import Job, Application, SavedJob
 
 class JobSerializer(serializers.ModelSerializer):
+    companyId = serializers.CharField(source='company_ref_id', read_only=True, allow_null=True)
+    ownerId = serializers.SerializerMethodField()
     postedTime = serializers.CharField(source='posted_time', required=False)
     applicantsCount = serializers.IntegerField(source='applicants_count', required=False)
     isVerified = serializers.BooleanField(source='is_verified', required=False)
@@ -11,12 +13,15 @@ class JobSerializer(serializers.ModelSerializer):
     class Meta:
         model = Job
         fields = [
-            'id', 'title', 'company', 'location', 'logo', 'type',
+            'id', 'title', 'company', 'companyId', 'ownerId', 'location', 'logo', 'type',
             'domain', 'salary', 'postedTime', 'applicantsCount',
             'skills', 'description', 'requirements', 'isVerified',
             'isSaved', 'applied'
         ]
         read_only_fields = ['id', 'company', 'isSaved', 'applied']
+
+    def get_ownerId(self, obj):
+        return str(obj.company_ref.user_id) if obj.company_ref_id and obj.company_ref and obj.company_ref.user_id else None
 
     def get_isSaved(self, obj):
         request = self.context.get('request')

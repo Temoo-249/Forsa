@@ -3,6 +3,7 @@ from .models import Company
 
 
 class CompanySerializer(serializers.ModelSerializer):
+    ownerId = serializers.UUIDField(source='user_id', read_only=True, allow_null=True)
     coverGradient = serializers.CharField(source='cover_gradient', required=False, allow_blank=True, allow_null=True)
     employeesCount = serializers.CharField(source='employees_count', required=False, allow_blank=True, allow_null=True)
     foundedYear = serializers.CharField(source='founded_year', required=False, allow_blank=True, allow_null=True)
@@ -22,7 +23,7 @@ class CompanySerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'tagline', 'logo', 'coverGradient', 'industry',
             'location', 'employeesCount', 'foundedYear', 'website',
-            'description', 'benefits', 'rating', 'reviewsCount',
+            'description', 'benefits', 'rating', 'reviewsCount', 'ownerId',
             'isVerified', 'openJobsCount'
         ]
         read_only_fields = ['id']   # ← الأهم: خلي الـ id للقراءة فقط

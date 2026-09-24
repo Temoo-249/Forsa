@@ -15,6 +15,7 @@ export interface AuthUser {
 
 export interface Company {
   id: string;
+  ownerId?: string | null;
   name: string;
   tagline: string;
   logo: string;
@@ -56,6 +57,9 @@ export interface JobApplicant {
 
 export interface Job {
   id: string;
+  // Immutable API relationships: a job belongs to this company and account.
+  companyId?: string | null;
+  ownerId?: string | null;
   title: string;
   company: string;
   location: string;

@@ -43,25 +43,34 @@ export default function PublicProfilePage() {
   if (!profile) return <div className="py-24 text-center text-slate-500">هذا الملف غير متاح أو تم حذفه.</div>;
   const isOwner = currentUser?.id === profile.id;
 
-  return <div className="max-w-4xl mx-auto space-y-6">
+  return <div className="max-w-5xl mx-auto space-y-6">
     <section className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
-      <div className="h-32 bg-gradient-to-l from-blue-700 to-indigo-700" />
-      <div className="px-6 pb-6 -mt-12 flex flex-col sm:flex-row sm:items-center gap-4">
-        <div className="w-24 h-24 shrink-0 rounded-3xl bg-white border-4 border-white shadow flex items-center justify-center text-3xl font-black text-blue-700">{profile.avatar || profile.name.slice(0, 2)}</div>
-        <div className="flex-1 min-w-0 pt-2 sm:pt-10">
-          <h1 className="text-2xl font-black text-slate-900 truncate">{profile.name}</h1>
-          <p className="text-slate-600 mt-1 truncate">{profile.headline || 'باحث عن عمل'}</p>
-          {profile.location && <p className="text-sm text-slate-500 flex gap-1 items-center mt-2"><MapPin className="w-4 h-4 shrink-0" />{profile.location}</p>}
-        </div>
-        {!isOwner && <div className="flex flex-wrap gap-2 shrink-0 sm:pt-10">
-          <button onClick={follow} className="px-4 py-2 rounded-xl border border-blue-600 text-blue-700 font-bold text-sm flex gap-2"><UserPlus className="w-4 h-4" />{profile.isFollowing ? 'إلغاء المتابعة' : 'متابعة'}</button>
-          {userRole === 'employer' && <>
-            <button disabled={sending} onClick={() => contact()} className="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold text-sm flex gap-2 disabled:opacity-60"><MessageCircle className="w-4 h-4" />مراسلة</button>
-            <button disabled={sending} onClick={() => contact(true)} className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold text-sm flex gap-2 disabled:opacity-60"><Send className="w-4 h-4" />تقديم عرض</button>
-          </>}
-        </div>}
+      <div className="h-44 sm:h-52 bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 relative">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.2),transparent)]" />
       </div>
-      <div className="px-6 py-4 border-t grid grid-cols-2 gap-4 text-center"><div><b>{profile.followersCount}</b><span className="text-slate-500 mr-1">متابع</span></div><div><b>{profile.followingCount}</b><span className="text-slate-500 mr-1">يتابع</span></div></div>
+      <div className="px-6 sm:px-10 pb-8 pt-0 relative">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between -mt-16 sm:-mt-20 mb-5 gap-4">
+          <div className="w-28 h-28 sm:w-32 sm:h-32 shrink-0 rounded-3xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white ring-4 ring-white shadow-xl flex items-center justify-center text-3xl sm:text-4xl font-black">{profile.avatar || profile.name.slice(0, 2)}</div>
+          {!isOwner && <div className="flex flex-wrap gap-2 shrink-0">
+            <button onClick={follow} className="px-4 py-2.5 rounded-xl border border-blue-600 text-blue-700 font-bold text-sm flex gap-2 bg-white"><UserPlus className="w-4 h-4" />{profile.isFollowing ? 'إلغاء المتابعة' : 'متابعة'}</button>
+            {userRole === 'employer' && <>
+              <button disabled={sending} onClick={() => contact()} className="px-4 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-sm flex gap-2 disabled:opacity-60"><MessageCircle className="w-4 h-4" />مراسلة</button>
+              <button disabled={sending} onClick={() => contact(true)} className="px-4 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-sm flex gap-2 disabled:opacity-60"><Send className="w-4 h-4" />تقديم عرض</button>
+            </>}
+          </div>}
+        </div>
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight truncate">{profile.name}</h1>
+          <p className="text-xs sm:text-base text-slate-600 font-medium mt-2 truncate">{profile.headline || 'باحث عن عمل'}</p>
+          {profile.location && <p className="text-xs text-slate-500 flex gap-1 items-center mt-3"><MapPin className="w-4 h-4 shrink-0" />{profile.location}</p>}
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 mt-6 border-t border-slate-100">
+          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 text-center"><b className="text-lg text-blue-700 block">{profile.followersCount}</b><span className="text-xs text-slate-400 font-semibold">متابعون</span></div>
+          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 text-center"><b className="text-lg text-slate-900 block">{profile.followingCount}</b><span className="text-xs text-slate-400 font-semibold">يتابع</span></div>
+          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 text-center"><b className="text-lg text-slate-900 block">{profile.skills.length}</b><span className="text-xs text-slate-400 font-semibold">مهارات</span></div>
+          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 text-center"><b className="text-lg text-slate-900 block">{profile.experiences.length}</b><span className="text-xs text-slate-400 font-semibold">خبرات</span></div>
+        </div>
+      </div>
     </section>
     {profile.bio && <section className="bg-white rounded-2xl p-6 border border-slate-200"><h2 className="font-black mb-2">نبذة</h2><p className="text-slate-600 leading-7">{profile.bio}</p></section>}
     <section className="bg-white rounded-2xl p-6 border border-slate-200"><h2 className="font-black mb-4 flex gap-2"><Briefcase className="w-5 h-5 text-blue-600" />المهارات</h2><div className="flex flex-wrap gap-2">{profile.skills.length ? profile.skills.map(skill => <span key={skill.id} className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm">{skill.name} · {skill.level}</span>) : <span className="text-slate-500">لم يضف مهارات بعد.</span>}</div></section>

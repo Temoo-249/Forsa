@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { usePathname } from 'next/navigation';
 import { useApp } from '../context/AppContext';
 import { Navbar } from './Navbar';
 import { MobileNav } from './MobileNav';
@@ -12,14 +13,16 @@ import { CheckCircle2, X } from 'lucide-react';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const app = useApp();
+  const pathname = usePathname();
+  const isAuthPage = ['/auth', '/login', '/register'].includes(pathname);
 
   const unreadMessagesCount = app.conversations.reduce((acc, c) => acc + c.unreadCount, 0);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-blue-600 selection:text-white" dir="rtl">
 
-      {/* Top Navbar */}
-      <Navbar
+      {/* The authentication pages deliberately use their focused, standalone layout. */}
+      {!isAuthPage && <Navbar
         currentTab={app.currentTab}
         onSelectTab={app.navigate}
         applicationsCount={app.applications.length}
@@ -32,7 +35,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         onLogout={app.handleLogout}
         onToggleRole={app.handleToggleRole}
         onOpenPostJobModal={() => app.setIsPostJobModalOpen(true)}
-      />
+      />}
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-24 md:pb-12">
