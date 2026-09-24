@@ -46,3 +46,15 @@ class ProfileApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('email', response.data)
+
+    def test_public_profile_is_available_for_an_employer(self):
+        employer = User.objects.create_user(
+            username='employer', email='employer@example.com', password='safe-password', role='employer'
+        )
+
+        response = self.client.get(reverse('public_profile', kwargs={'pk': employer.id}))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['id'], str(employer.id))
+        self.assertEqual(response.data['role'], 'employer')
+        self.assertNotIn('email', response.data)

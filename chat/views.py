@@ -99,9 +99,11 @@ class ProfileConversationView(views.APIView):
     def post(self, request, user_id):
         from accounts.models import User
         try:
-            candidate = User.objects.get(id=user_id, role='seeker', is_active=True)
+            candidate = User.objects.get(id=user_id, is_active=True)
         except User.DoesNotExist:
-            return Response({'detail': 'Candidate not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
+        if candidate.id == request.user.id:
+            return Response({'detail': 'You cannot start a conversation with yourself'}, status=status.HTTP_400_BAD_REQUEST)
 
         conversation = Conversation.objects.filter(Q(user=request.user, peer=candidate) | Q(user=candidate, peer=request.user)).first()
         if not conversation:

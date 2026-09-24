@@ -179,10 +179,13 @@ class UserResumeDetailView(views.APIView):
 
 
 class PublicProfileView(views.APIView):
-    """Public, privacy-safe profile for job seekers only."""
+    """Public, privacy-safe profile for every active platform account."""
     def get(self, request, pk):
         try:
-            user = User.objects.get(id=pk, role='seeker', is_active=True)
+            # The public serializer deliberately excludes email, phone, CVs
+            # and other private account data.  Both seekers and employers can
+            # therefore be discovered from the community feed.
+            user = User.objects.get(id=pk, is_active=True)
         except User.DoesNotExist:
             return Response({'detail': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
         data = PublicProfileSerializer(user).data
@@ -195,7 +198,7 @@ class ToggleFollowView(views.APIView):
 
     def post(self, request, pk):
         try:
-            target = User.objects.get(id=pk, role='seeker', is_active=True)
+            target = User.objects.get(id=pk, is_active=True)
         except User.DoesNotExist:
             return Response({'detail': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
         if target.id == request.user.id:

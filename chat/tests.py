@@ -56,3 +56,14 @@ class MessagingApiTests(APITestCase):
             format='json',
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_users_can_open_a_regular_conversation_with_an_employer_profile(self):
+        other_seeker = User.objects.create_user(
+            username='other-seeker', email='other@example.com', password='safe-password'
+        )
+        self.client.force_authenticate(other_seeker)
+
+        response = self.client.post(f'/api/conversations/profiles/{self.employer.id}/', {}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['companyName'], self.employer.get_full_name() or self.employer.username)
