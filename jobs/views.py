@@ -2,7 +2,7 @@
 from rest_framework.response import Response
 from rest_framework import permissions
 from django.db.models import Q
-from .models import Job, Application, SavedJob
+from .models import Job, Application, SavedJob, ApplicationStatusLog
 from .serializers import JobSerializer, ApplicationSerializer, JobApplicantSerializer
 from accounts.models import User
 import uuid
@@ -194,6 +194,7 @@ class EmployerApplicantsView(views.APIView):
         interview_date = request.data.get('interviewDate')
 
         if status_val:
+            old_status = app.status
             app.status = status_val
             steps = ['التقدم', 'المراجعة', 'الاختصار', 'المقابلة', 'العرض', 'التوظيف']
             if status_val in steps:
@@ -213,4 +214,9 @@ class EmployerApplicantsView(views.APIView):
             app.interview_date = interview_date
 
         app.save()
+        if status_val and status_val != old_status:
+            ApplicationStatusLog.objects.create(
+                application=app, old_status=old_status, new_status=status_val,
+                changed_by=request.user, note=request.data.get('note', '')
+            )
         return Response(JobApplicantSerializer(app).data)

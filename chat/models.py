@@ -34,3 +34,16 @@ class Message(models.Model):
 
     def __str__(self):
         return f"Message {self.id} in {self.conversation.id}"
+
+
+class HireOffer(models.Model):
+    STATUS_CHOICES = [('sent', 'Sent'), ('accepted', 'Accepted'), ('declined', 'Declined'), ('negotiating', 'Negotiating')]
+    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='hire_offers')
+    company = models.ForeignKey('companies.Company', on_delete=models.CASCADE, related_name='hire_offers')
+    candidate = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='received_hire_offers')
+    job = models.ForeignKey('jobs.Job', on_delete=models.SET_NULL, null=True, blank=True, related_name='hire_offers')
+    offer_details = models.TextField()
+    salary_offered = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='sent')
+    sent_at = models.DateTimeField(auto_now_add=True)
+    responded_at = models.DateTimeField(null=True, blank=True)

@@ -1,5 +1,5 @@
 ﻿from django.contrib import admin
-from .models import Job, Application, SavedJob
+from .models import Job, Application, SavedJob, JobCategory, JobSkill, ApplicationStatusLog, Interview, JobMatch, Recommendation
 
 @admin.register(Job)
 class JobAdmin(admin.ModelAdmin):
@@ -12,3 +12,9 @@ class ApplicationAdmin(admin.ModelAdmin):
     list_filter = ('status',)
 
 admin.site.register(SavedJob)
+admin.site.register(JobCategory)
+admin.site.register(JobSkill)
+admin.site.register(ApplicationStatusLog)
+admin.site.register(Interview)
+admin.site.register(JobMatch)
+admin.site.register(Recommendation)

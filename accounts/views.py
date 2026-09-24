@@ -2,8 +2,8 @@ from rest_framework import status, views, permissions
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
-from .models import User, Skill, Experience, Education, CVFile, Follow
-from .serializers import UserSerializer, RegisterSerializer, SkillSerializer, ExperienceSerializer, EducationSerializer, CVFileSerializer, PublicProfileSerializer
+from .models import User, Skill, Experience, Education, CVFile, Follow, JobSeekerPreference
+from .serializers import UserSerializer, RegisterSerializer, SkillSerializer, ExperienceSerializer, EducationSerializer, CVFileSerializer, PublicProfileSerializer, JobSeekerPreferenceSerializer
 import uuid
 from companies.models import Company
 
@@ -165,18 +165,31 @@ class UserResumeDetailView(views.APIView):
             return Response({'detail': 'Resume not found'}, status=status.HTTP_404_NOT_FOUND)
 
     def patch(self, request, pk):
-        user = request.user
         try:
-            cv = CVFile.objects.get(id=pk, user=user)
+            cv = CVFile.objects.get(id=pk, user=request.user)
             if request.data.get('isDefault') is not None:
                 if request.data.get('isDefault'):
-                    CVFile.objects.filter(user=user).update(is_default=False)
+                    CVFile.objects.filter(user=request.user).update(is_default=False)
                 cv.is_default = bool(request.data.get('isDefault'))
                 cv.save()
             return Response(CVFileSerializer(cv).data)
         except CVFile.DoesNotExist:
             return Response({'detail': 'Resume not found'}, status=status.HTTP_404_NOT_FOUND)
 
+
+class JobSeekerPreferenceView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        preference, _ = JobSeekerPreference.objects.get_or_create(user=request.user)
+        return Response(JobSeekerPreferenceSerializer(preference).data)
+
+    def patch(self, request):
+        preference, _ = JobSeekerPreference.objects.get_or_create(user=request.user)
+        serializer = JobSeekerPreferenceSerializer(preference, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 class PublicProfileView(views.APIView):
     """Public, privacy-safe profile for every active platform account."""

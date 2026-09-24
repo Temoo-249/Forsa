@@ -9,6 +9,9 @@ class Notification(models.Model):
     time = models.CharField(max_length=100, default='الآن')
     unread = models.BooleanField(default=True)
     action_tab = models.CharField(max_length=50, blank=True, null=True)
+    notification_type = models.CharField(max_length=50, default='general')
+    body = models.TextField(blank=True)
+    ref_id = models.CharField(max_length=100, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

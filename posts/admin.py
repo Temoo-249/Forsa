@@ -1,5 +1,5 @@
 ﻿from django.contrib import admin
-from .models import Post, PostLike, PostComment
+from .models import Post, PostLike, PostComment, PostSkillTag
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
@@ -7,3 +7,4 @@ class PostAdmin(admin.ModelAdmin):
 
 admin.site.register(PostLike)
 admin.site.register(PostComment)
+admin.site.register(PostSkillTag)

@@ -34,6 +34,14 @@ class PostLike(models.Model):
     class Meta:
         unique_together = ('user', 'post')
 
+
+class PostSkillTag(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='skill_tags')
+    name = models.CharField(max_length=100)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['post', 'name'], name='unique_post_skill_tag')]
+
 class PostComment(models.Model):
     id = models.CharField(max_length=50, primary_key=True)
     user = models.ForeignKey('accounts.User', on_delete=models.CASCADE)

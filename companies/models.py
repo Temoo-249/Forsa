@@ -23,3 +23,15 @@ class Company(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class CompanyMember(models.Model):
+    ROLE_CHOICES = [('owner', 'Owner'), ('admin', 'Admin'), ('recruiter', 'Recruiter'), ('hr', 'HR')]
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='members')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='company_memberships')
+    member_role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='recruiter')
+    joined_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['company', 'user'], name='unique_company_member')]

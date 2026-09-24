@@ -68,6 +68,40 @@ class CVFile(models.Model):
         return f"{self.name} ({self.user.username})"
 
 
+class JobSeekerProfile(models.Model):
+    """Extended seeker data kept separate from the authentication account."""
+    AVAILABILITY_CHOICES = [('open', 'Open'), ('not_looking', 'Not looking'), ('open_to_offers', 'Open to offers')]
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='job_seeker_profile')
+    linkedin_url = models.URLField(blank=True)
+    portfolio_url = models.URLField(blank=True)
+    date_of_birth = models.DateField(null=True, blank=True)
+    availability = models.CharField(max_length=20, choices=AVAILABILITY_CHOICES, default='open')
+
+
+class JobSeekerPreference(models.Model):
+    JOB_TYPES = [('full_time', 'Full time'), ('part_time', 'Part time'), ('freelance', 'Freelance'), ('internship', 'Internship')]
+    WORK_MODES = [('onsite', 'Onsite'), ('hybrid', 'Hybrid'), ('remote', 'Remote')]
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='job_preferences')
+    preferred_location = models.CharField(max_length=255, blank=True)
+    preferred_job_type = models.CharField(max_length=20, choices=JOB_TYPES, blank=True)
+    preferred_work_mode = models.CharField(max_length=20, choices=WORK_MODES, blank=True)
+    min_salary = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    max_salary = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    preferred_currency = models.CharField(max_length=10, default='SAR')
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class CVAnalysis(models.Model):
+    STATUS_CHOICES = [('pending', 'Pending'), ('processing', 'Processing'), ('completed', 'Completed'), ('failed', 'Failed')]
+    cv = models.ForeignKey(CVFile, on_delete=models.CASCADE, related_name='analyses')
+    parsed_text = models.TextField(blank=True)
+    extracted_data = models.JSONField(default=dict, blank=True)
+    profile_completeness = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+    model_version = models.CharField(max_length=100, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+
+
 class Follow(models.Model):
     """A directed professional follow relationship."""
     follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following_relations')

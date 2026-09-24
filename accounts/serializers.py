@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Skill, Experience, Education, CVFile
+from .models import User, Skill, Experience, Education, CVFile, JobSeekerPreference
 
 class SkillSerializer(serializers.ModelSerializer):
     class Meta:
@@ -24,6 +24,19 @@ class CVFileSerializer(serializers.ModelSerializer):
         model = CVFile
         fields = ['id', 'name', 'uploadDate', 'size', 'isDefault', 'file']
         extra_kwargs = {'file': {'required': False}}
+
+
+class JobSeekerPreferenceSerializer(serializers.ModelSerializer):
+    preferredLocation = serializers.CharField(source='preferred_location', required=False, allow_blank=True)
+    preferredJobType = serializers.CharField(source='preferred_job_type', required=False, allow_blank=True)
+    preferredWorkMode = serializers.CharField(source='preferred_work_mode', required=False, allow_blank=True)
+    minSalary = serializers.DecimalField(source='min_salary', max_digits=12, decimal_places=2, required=False, allow_null=True)
+    maxSalary = serializers.DecimalField(source='max_salary', max_digits=12, decimal_places=2, required=False, allow_null=True)
+    preferredCurrency = serializers.CharField(source='preferred_currency', required=False)
+
+    class Meta:
+        model = JobSeekerPreference
+        fields = ['preferredLocation', 'preferredJobType', 'preferredWorkMode', 'minSalary', 'maxSalary', 'preferredCurrency', 'updated_at']
 
 class UserSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()

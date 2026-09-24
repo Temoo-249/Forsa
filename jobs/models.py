@@ -26,9 +26,39 @@ class Job(models.Model):
     requirements = models.JSONField(default=list, blank=True)
     is_verified = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    category = models.ForeignKey('JobCategory', on_delete=models.SET_NULL, null=True, blank=True, related_name='jobs')
+    created_by_member = models.ForeignKey('companies.CompanyMember', on_delete=models.SET_NULL, null=True, blank=True, related_name='created_jobs')
+    employment_type = models.CharField(max_length=20, blank=True)
+    work_mode = models.CharField(max_length=20, blank=True)
+    salary_type = models.CharField(max_length=20, default='negotiable')
+    salary_min = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    salary_max = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    currency = models.CharField(max_length=10, default='SAR')
+    status = models.CharField(max_length=20, default='active')
+    deadline = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.title} - {self.company}"
+
+
+class JobCategory(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    icon = models.CharField(max_length=100, blank=True)
+    parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='children')
+
+    def __str__(self):
+        return self.name
+
+
+class JobSkill(models.Model):
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='skill_requirements')
+    name = models.CharField(max_length=100)
+    is_required = models.BooleanField(default=True)
+    weight = models.DecimalField(max_digits=5, decimal_places=2, default=1)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['job', 'name'], name='unique_job_skill_name')]
 
 class SavedJob(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='saved_jobs')
@@ -84,3 +114,58 @@ class Application(models.Model):
 
     def __str__(self):
         return f"Application {self.id} for {self.job_title}"
+
+
+class ApplicationStatusLog(models.Model):
+    application = models.ForeignKey(Application, on_delete=models.CASCADE, related_name='status_logs')
+    old_status = models.CharField(max_length=50, blank=True)
+    new_status = models.CharField(max_length=50)
+    note = models.TextField(blank=True)
+    changed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='application_status_changes')
+    changed_at = models.DateTimeField(auto_now_add=True)
+
+
+class Interview(models.Model):
+    TYPE_CHOICES = [('online', 'Online'), ('onsite', 'Onsite'), ('phone', 'Phone')]
+    STATUS_CHOICES = [('scheduled', 'Scheduled'), ('completed', 'Completed'), ('cancelled', 'Cancelled'), ('no_show', 'No show')]
+    application = models.ForeignKey(Application, on_delete=models.CASCADE, related_name='interviews')
+    scheduled_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='scheduled_interviews')
+    interview_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    scheduled_at = models.DateTimeField()
+    duration_minutes = models.PositiveIntegerField(default=30)
+    meeting_url = models.URLField(blank=True)
+    location = models.CharField(max_length=255, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='scheduled')
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class JobMatch(models.Model):
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='matches')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='job_matches')
+    match_score = models.DecimalField(max_digits=5, decimal_places=2)
+    skill_score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    experience_score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    education_score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    location_score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    preference_score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    ai_score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    explanation = models.TextField(blank=True)
+    model_version = models.CharField(max_length=100, blank=True)
+    calculated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['job', 'user'], name='unique_job_match')]
+
+
+class Recommendation(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='recommendations')
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='recommendations')
+    score = models.DecimalField(max_digits=5, decimal_places=2)
+    reason = models.TextField(blank=True)
+    model_version = models.CharField(max_length=100, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['user', 'job'], name='unique_recommendation')]
