@@ -41,7 +41,7 @@ class JobListCreateView(views.APIView):
         data = request.data.copy()
         # IDs are owned by the server so a client cannot overwrite or guess
         # another employer's listing.
-        data['id'] = f"job-{uuid.uuid4().hex[:12]}"
+        job_id = f"job-{uuid.uuid4().hex[:12]}"
         company = Company.objects.filter(user=request.user).first()
         if not company:
             return Response({'detail': 'Create your company profile before posting a job'}, status=status.HTTP_400_BAD_REQUEST)
@@ -50,7 +50,10 @@ class JobListCreateView(views.APIView):
             # The company is determined from the authenticated employer, never
             # from client input.  `company` is read-only in the serializer, so
             # it must be supplied explicitly here before saving the model.
-            job = serializer.save(company_ref=company, company=company.name)
+            # `id` is read-only to clients, so pass the server-generated value
+            # directly to save().  Putting it in request data is ignored by DRF
+            # and previously created the first job with an empty primary key.
+            job = serializer.save(id=job_id, company_ref=company, company=company.name)
             company.open_jobs_count = Job.objects.filter(company_ref=company).count()
             company.save(update_fields=['open_jobs_count'])
             return Response(JobSerializer(job, context={'request': request}).data, status=status.HTTP_201_CREATED)

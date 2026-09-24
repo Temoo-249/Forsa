@@ -62,3 +62,19 @@ class JobOwnershipTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['company'], self.company.name)
         self.assertEqual(response.data['companyId'], self.company.id)
+
+    def test_employer_can_create_multiple_jobs_with_server_generated_ids(self):
+        self.client.force_authenticate(self.owner)
+        payload = {
+            'title': 'Developer', 'location': 'Riyadh', 'salary': '12000',
+            'description': 'Build reliable software.', 'requirements': ['Python'],
+            'skills': ['Python'], 'domain': 'Engineering', 'type': 'دوام كامل',
+        }
+
+        first = self.client.post('/api/jobs/', payload, format='json')
+        second = self.client.post('/api/jobs/', {**payload, 'title': 'Designer'}, format='json')
+
+        self.assertEqual(first.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(second.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(first.data['id'].startswith('job-'))
+        self.assertNotEqual(first.data['id'], second.data['id'])
