@@ -37,7 +37,7 @@ interface EmployerDashboardProps {
   company: Company;
   jobs: Job[];
   applicants: JobApplicant[];
-  onPostJob: (newJob: Job) => void;
+  onPostJob: (newJob: Job) => Promise<boolean>;
   onUpdateApplicantStatus: (applicantId: string, status: ApplicationStatus) => void;
   onScheduleInterview: (applicantId: string, interviewDate: string) => void;
   onContactCandidate: (applicant: JobApplicant) => void;

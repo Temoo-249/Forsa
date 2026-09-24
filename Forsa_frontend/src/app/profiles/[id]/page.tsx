@@ -17,9 +17,8 @@ export default function PublicProfilePage() {
 
   useEffect(() => { profilesAPI.getProfile(id).then(setProfile).finally(() => setLoading(false)); }, [id]);
 
-  const requireEmployer = () => {
+  const requireAuthenticatedUser = () => {
     if (!currentUser) { showToast('سجّل دخولك أولاً'); router.push('/login'); return false; }
-    if (userRole !== 'employer') { showToast('هذه الخاصية متاحة لأصحاب العمل فقط'); return false; }
     return true;
   };
   const follow = async () => {
@@ -29,7 +28,11 @@ export default function PublicProfilePage() {
     else showToast('تعذر تحديث المتابعة، حاول مرة أخرى');
   };
   const contact = async (offer = false) => {
-    if (!requireEmployer()) return;
+    if (!requireAuthenticatedUser()) return;
+    if (offer && userRole !== 'employer') {
+      showToast('العروض الوظيفية متاحة لأصحاب العمل فقط');
+      return;
+    }
     setSending(true);
     const result = await profilesAPI.contact(id, offer ? { jobTitle: 'عرض وظيفي جديد', message: `مرحباً ${profile?.name}، نرغب في تقديم عرض وظيفي لك.` } : undefined);
     setSending(false);
@@ -53,8 +56,8 @@ export default function PublicProfilePage() {
           <div className="w-28 h-28 sm:w-32 sm:h-32 shrink-0 rounded-3xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white ring-4 ring-white shadow-xl flex items-center justify-center text-3xl sm:text-4xl font-black">{profile.avatar || profile.name.slice(0, 2)}</div>
           {!isOwner && <div className="flex flex-wrap gap-2 shrink-0">
             <button onClick={follow} className="px-4 py-2.5 rounded-xl border border-blue-600 text-blue-700 font-bold text-sm flex gap-2 bg-white"><UserPlus className="w-4 h-4" />{profile.isFollowing ? 'إلغاء المتابعة' : 'متابعة'}</button>
+            <button disabled={sending} onClick={() => contact()} className="px-4 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-sm flex gap-2 disabled:opacity-60"><MessageCircle className="w-4 h-4" />مراسلة</button>
             {userRole === 'employer' && <>
-              <button disabled={sending} onClick={() => contact()} className="px-4 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-sm flex gap-2 disabled:opacity-60"><MessageCircle className="w-4 h-4" />مراسلة</button>
               <button disabled={sending} onClick={() => contact(true)} className="px-4 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-sm flex gap-2 disabled:opacity-60"><Send className="w-4 h-4" />تقديم عرض</button>
             </>}
           </div>}

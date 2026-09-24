@@ -49,3 +49,16 @@ class JobOwnershipTests(APITestCase):
         self.assertEqual(item['id'], self.job.id)
         self.assertEqual(item['companyId'], self.company.id)
         self.assertEqual(item['ownerId'], str(self.owner.id))
+
+    def test_employer_can_create_a_job_for_their_own_company(self):
+        self.client.force_authenticate(self.owner)
+
+        response = self.client.post('/api/jobs/', {
+            'title': 'Frontend Developer', 'location': 'Riyadh', 'salary': '12000',
+            'description': 'Build excellent product experiences.', 'requirements': ['React'],
+            'skills': ['React'], 'domain': 'Engineering', 'type': 'دوام كامل',
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['company'], self.company.name)
+        self.assertEqual(response.data['companyId'], self.company.id)

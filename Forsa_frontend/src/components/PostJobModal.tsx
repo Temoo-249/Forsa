@@ -20,7 +20,7 @@ interface PostJobModalProps {
   isOpen: boolean;
   onClose: () => void;
   employerCompany: Company;
-  onPostJob: (newJob: Job) => void;
+  onPostJob: (newJob: Job) => Promise<boolean>;
 }
 
 export const PostJobModal: React.FC<PostJobModalProps> = ({
@@ -56,7 +56,7 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({
     setSkills(prev => prev.filter(s => s !== skillToRemove));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
       setError('يرجى كتابة المسمى الوظيفي');
@@ -94,8 +94,8 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({
       applied: false
     };
 
-    onPostJob(newJob);
-    onClose();
+    const posted = await onPostJob(newJob);
+    if (posted) onClose();
   };
 
   return (

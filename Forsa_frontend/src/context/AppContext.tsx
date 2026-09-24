@@ -148,7 +148,7 @@ interface AppContextType {
   companies: Company[];
   employerApplicants: JobApplicant[];
   myEmployerCompany: Company;
- handlePostJob: (job: Job) => Promise<void>;
+ handlePostJob: (job: Job) => Promise<boolean>;
   handleUpdateApplicantStatus: (applicantId: string, status: ApplicationStatus) => void;
   handleScheduleInterview: (applicantId: string, interviewDate: string) => void;
   handleContactCandidate: (applicant: JobApplicant) => Promise<void>;
@@ -685,13 +685,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [showToast]);
 
   // ── Employer & Companies ──
- const handlePostJob = useCallback(async (newJob: Job) => {
+ const handlePostJob = useCallback(async (newJob: Job): Promise<boolean> => {
   try {
     const savedJob = await jobsAPI.createJob(newJob);
 
     if (!savedJob || !savedJob.id) {
       showToast('تعذر نشر الوظيفة', 'تأكد من البيانات وحاول مرة أخرى');
-      return;
+      return false;
     }
 
     // استخدم بيانات الباك إند (بالـ ID الحقيقي)
@@ -710,9 +710,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       `تم نشر وظيفة "${savedJob.title}" بنجاح!`,
       'تظهر الآن للباحثين عن عمل في استكشاف الوظائف.'
     );
+    return true;
   } catch (error) {
     console.error('Post job error:', error);
     showToast('تعذر نشر الوظيفة', 'تأكد من الاتصال بالـ Backend');
+    return false;
   }
 }, [showToast]);
 

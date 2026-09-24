@@ -40,3 +40,19 @@ class MessagingApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['id'], self.conversation.id)
         self.assertEqual(Conversation.objects.filter(user=self.employer, peer=self.seeker).count(), 1)
+
+    def test_seeker_can_open_a_regular_conversation_but_cannot_send_an_offer(self):
+        other_seeker = User.objects.create_user(
+            username='other-seeker', email='other@example.com', password='safe-password'
+        )
+        self.client.force_authenticate(other_seeker)
+
+        response = self.client.post(f'/api/conversations/profiles/{self.seeker.id}/', {}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        response = self.client.post(
+            f'/api/conversations/{response.data["id"]}/messages/',
+            {'text': 'I should not be an offer', 'isOffer': True},
+            format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

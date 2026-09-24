@@ -41,8 +41,14 @@ class SendMessageView(views.APIView):
 
         # The client must not be able to impersonate the other participant.
         sender = 'company' if request.user.role == 'employer' else 'user'
-        is_offer = request.data.get('isOffer', False)
+        is_offer = bool(request.data.get('isOffer', False))
         offer_details = request.data.get('offerDetails')
+
+        # A normal conversation is available to every signed-in user.  Only an
+        # employer can turn a message into a job offer; this cannot be bypassed
+        # by crafting an API request from the browser.
+        if is_offer and request.user.role != 'employer':
+            return Response({'detail': 'Only employers can send offers'}, status=status.HTTP_403_FORBIDDEN)
 
         msg = Message.objects.create(
             id=f"msg-{uuid.uuid4().hex[:6]}",
@@ -87,13 +93,11 @@ class RespondOfferView(views.APIView):
 
 
 class ProfileConversationView(views.APIView):
-    """Employer-only contact and job-offer action for a seeker profile."""
+    """Open one direct conversation per pair; offers remain employer-only."""
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, user_id):
         from accounts.models import User
-        if request.user.role != 'employer':
-            return Response({'detail': 'Only employers can contact candidates'}, status=status.HTTP_403_FORBIDDEN)
         try:
             candidate = User.objects.get(id=user_id, role='seeker', is_active=True)
         except User.DoesNotExist:
