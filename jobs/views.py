@@ -61,6 +61,24 @@ class JobDetailView(views.APIView):
         except Job.DoesNotExist:
             return Response({'detail': 'Job not found'}, status=status.HTTP_404_NOT_FOUND)
 
+    def delete(self, request, pk):
+        if not request.user.is_authenticated:
+            return Response({'detail': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
+        try:
+            job = Job.objects.select_related('company_ref').get(id=pk)
+        except Job.DoesNotExist:
+            return Response({'detail': 'Job not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if request.user.role != 'employer' or job.company_ref_id not in Company.objects.filter(user=request.user).values_list('id', flat=True):
+            return Response({'detail': 'You do not own this job'}, status=status.HTTP_403_FORBIDDEN)
+
+        company = job.company_ref
+        job.delete()
+        if company:
+            company.open_jobs_count = Job.objects.filter(company_ref=company).count()
+            company.save(update_fields=['open_jobs_count'])
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 class ToggleSaveJobView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
     def post(self, request, pk):

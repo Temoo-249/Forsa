@@ -225,6 +225,19 @@ export const jobsAPI = {
   }
 },
 
+  async deleteJob(jobId: string): Promise<boolean> {
+    try {
+      const res = await fetch(API_BASE + '/jobs/' + jobId + '/', {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+      return res.ok;
+    } catch (e) {
+      console.error('Failed to delete job', e);
+      return false;
+    }
+  },
+
   async toggleSave(jobId: string): Promise<{ isSaved: boolean } | null> {
     try {
       const res = await fetch(API_BASE + '/jobs/' + jobId + '/save/', {

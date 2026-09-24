@@ -36,6 +36,8 @@ export interface JobApplicant {
   id: string;
   jobId: string;
   jobTitle: string;
+  // Present for applicants loaded from the API. Demo fixtures may not have it.
+  candidateId?: string;
   candidateName: string;
   candidateHeadline: string;
   candidateAvatar: string;

@@ -48,6 +48,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
         ]
 
 class JobApplicantSerializer(serializers.ModelSerializer):
+    candidateId = serializers.UUIDField(source='user_id', read_only=True)
     jobId = serializers.CharField(source='job_id', required=False)
     jobTitle = serializers.CharField(source='job_title', required=False)
     candidateName = serializers.CharField(source='candidate_name', required=False)
@@ -68,7 +69,7 @@ class JobApplicantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Application
         fields = [
-            'id', 'jobId', 'jobTitle', 'candidateName', 'candidateHeadline',
+            'id', 'jobId', 'jobTitle', 'candidateId', 'candidateName', 'candidateHeadline',
             'candidateAvatar', 'candidateEmail', 'candidatePhone',
             'experienceYears', 'education', 'appliedDate', 'status',
             'matchScore', 'resumeFileName', 'coverNote', 'skills',

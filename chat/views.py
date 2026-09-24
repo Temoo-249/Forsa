@@ -35,8 +35,12 @@ class SendMessageView(views.APIView):
         except Conversation.DoesNotExist:
             return Response({'detail': 'Conversation not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        text = request.data.get('text', '')
-        sender = request.data.get('sender', 'user')
+        text = (request.data.get('text') or '').strip()
+        if not text:
+            return Response({'text': ['This field may not be blank.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        # The client must not be able to impersonate the other participant.
+        sender = 'company' if request.user.role == 'employer' else 'user'
         is_offer = request.data.get('isOffer', False)
         offer_details = request.data.get('offerDetails')
 
@@ -105,6 +109,8 @@ class ProfileConversationView(views.APIView):
 
         offer = request.data.get('offer')
         if offer:
+            if request.user.role != 'employer':
+                return Response({'detail': 'Only employers can send offers'}, status=status.HTTP_403_FORBIDDEN)
             job_title = (offer.get('jobTitle') or '').strip()
             if not job_title:
                 return Response({'detail': 'Job title is required for an offer'}, status=status.HTTP_400_BAD_REQUEST)

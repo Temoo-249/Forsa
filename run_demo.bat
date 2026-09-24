@@ -8,7 +8,7 @@ echo.
 cd /d "%~dp0"
 
 echo [1/2] جاري تشغيل خادم الباك إند (Django API)...
-start "Forsa Backend (Django)" cmd /k "call .\venv\Scripts\activate.bat && python manage.py runserver 127.0.0.1:8000"
+start "Forsa Backend (Django)" cmd /k "if exist .\venv\Scripts\activate.bat (call .\venv\Scripts\activate.bat) & python manage.py runserver 127.0.0.1:8000"
 
 timeout /t 2 /nobreak >nul
 

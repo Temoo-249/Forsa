@@ -102,12 +102,26 @@ class UserExperienceView(views.APIView):
         items = Experience.objects.filter(user=user)
         return Response(ExperienceSerializer(items, many=True).data)
 
+    def post(self, request):
+        serializer = ExperienceSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class UserEducationView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
         user = request.user
         items = Education.objects.filter(user=user)
         return Response(EducationSerializer(items, many=True).data)
+
+    def post(self, request):
+        serializer = EducationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserResumesView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]

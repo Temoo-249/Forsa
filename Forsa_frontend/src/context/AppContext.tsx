@@ -26,7 +26,8 @@ import {
   companiesAPI,
   postsAPI,
   chatAPI,
-  notificationsAPI
+  notificationsAPI,
+  profilesAPI
 } from '../services/api';
 
 // ─── Route Mapping ───────────────────────────────────────────────
@@ -149,7 +150,7 @@ interface AppContextType {
  handlePostJob: (job: Job) => Promise<void>;
   handleUpdateApplicantStatus: (applicantId: string, status: ApplicationStatus) => void;
   handleScheduleInterview: (applicantId: string, interviewDate: string) => void;
-  handleContactCandidate: (applicant: JobApplicant) => void;
+  handleContactCandidate: (applicant: JobApplicant) => Promise<void>;
   handleUpdateCompany: (updatedCompany: Company) => Promise<boolean>;
   handleDeleteJob: (jobId: string) => void;
   handleToggleJobStatus: (jobId: string) => void;
@@ -717,35 +718,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     showToast('تم تحديد موعد المقابلة بنجاح', `الموعد: ${interviewDate}`);
   }, [showToast]);
 
-  const handleContactCandidate = useCallback((applicant: JobApplicant) => {
-    const existing = conversations.find(c => c.companyName === applicant.candidateName);
-    if (!existing) {
-      const newConv: Conversation = {
-        id: `conv-cand-${applicant.id}`,
-        companyName: applicant.candidateName,
-        companyLogo: applicant.candidateAvatar,
-        jobTitle: `مرشح لوظيفة ${applicant.jobTitle}`,
-        lastMessage: `مرحباً ${applicant.candidateName}، نود التواصل معك بخصوص طلبك لوظيفة ${applicant.jobTitle}.`,
-        lastMessageTime: 'الآن',
-        isOnline: true,
-        unreadCount: 0,
-        messages: [
-          {
-            id: `msg-${Date.now()}`,
-            sender: 'company',
-            text: `مرحباً ${applicant.candidateName}، نود التواصل معك بخصوص طلبك لوظيفة ${applicant.jobTitle}.`,
-            time: 'الآن'
-          }
-        ],
-        sharedFiles: [
-          { name: applicant.resumeFileName, date: applicant.appliedDate, size: '2.4 MB' }
-        ]
-      };
-      setConversations(prev => [newConv, ...prev]);
+  const handleContactCandidate = useCallback(async (applicant: JobApplicant) => {
+    if (!applicant.candidateId) {
+      showToast('تعذر فتح المحادثة', 'بيانات المرشح غير مكتملة');
+      return;
     }
+    const conversation = await profilesAPI.contact(applicant.candidateId);
+    if (!conversation) {
+      showToast('تعذر فتح المحادثة', 'تحقق من الاتصال ثم حاول مرة أخرى');
+      return;
+    }
+    setConversations(prev => {
+      const exists = prev.some(item => item.id === conversation.id);
+      return exists ? prev.map(item => item.id === conversation.id ? conversation : item) : [conversation, ...prev];
+    });
     navigate('messages');
     showToast(`تم فتح المحادثة مع المرشح ${applicant.candidateName}`);
-  }, [conversations, navigate, showToast]);
+  }, [navigate, showToast]);
 
  const handleUpdateCompany = useCallback(async (updatedCompany: Company): Promise<boolean> => {
   try {
@@ -780,8 +769,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
 }, [showToast]);
 
-  const handleDeleteJob = useCallback((jobId: string) => {
+  const handleDeleteJob = useCallback(async (jobId: string) => {
     const jobToDelete = jobs.find(j => j.id === jobId);
+    if (!jobToDelete || !await jobsAPI.deleteJob(jobId)) {
+      showToast('تعذر حذف الوظيفة', 'تحقق من الاتصال والصلاحيات ثم حاول مرة أخرى');
+      return;
+    }
     setJobs(prev => prev.filter(j => j.id !== jobId));
     if (jobToDelete) {
       setCompanies(prev => prev.map(c => {
