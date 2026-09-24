@@ -9,9 +9,10 @@ import {
   AuthUser
 } from '../types';
 
-// Vercel exposes only NEXT_PUBLIC_* values to the browser.  Keep the deployed
-// API configurable and use the local Django server during development.
-const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api').replace(/\/$/, '');
+// Vercel exposes only NEXT_PUBLIC_* values to the browser. The existing
+// Railway deployment remains a safe fallback so a missing Vercel variable
+// cannot make login silently target localhost in a user's browser.
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://believable-commitment-production-ed28.up.railway.app/api').replace(/\/$/, '');
 
 function getAuthHeaders() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('forsa_auth_token') : null;
