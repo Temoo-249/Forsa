@@ -1,4 +1,4 @@
-from rest_framework import status, views
+from rest_framework import status, views, permissions
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
@@ -63,19 +63,17 @@ class LoginView(views.APIView):
         return Response({'detail': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
 
 class CurrentUserView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def get(self, request):
-        user = request.user if request.user.is_authenticated else User.objects.first()
-        if not user:
-            return Response({'detail': 'No user found'}, status=status.HTTP_404_NOT_FOUND)
+        user = request.user
         token, _ = Token.objects.get_or_create(user=user)
         data = UserSerializer(user).data
         data['token'] = token.key
         return Response(data)
 
     def patch(self, request):
-        user = request.user if request.user.is_authenticated else User.objects.first()
-        if not user:
-            return Response({'detail': 'No user found'}, status=status.HTTP_404_NOT_FOUND)
+        user = request.user
         serializer = UserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -83,13 +81,14 @@ class CurrentUserView(views.APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserSkillsView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
-        user = request.user if request.user.is_authenticated else User.objects.first()
+        user = request.user
         skills = Skill.objects.filter(user=user)
         return Response(SkillSerializer(skills, many=True).data)
 
     def post(self, request):
-        user = request.user if request.user.is_authenticated else User.objects.first()
+        user = request.user
         serializer = SkillSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(user=user)
@@ -97,25 +96,28 @@ class UserSkillsView(views.APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserExperienceView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
-        user = request.user if request.user.is_authenticated else User.objects.first()
+        user = request.user
         items = Experience.objects.filter(user=user)
         return Response(ExperienceSerializer(items, many=True).data)
 
 class UserEducationView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
-        user = request.user if request.user.is_authenticated else User.objects.first()
+        user = request.user
         items = Education.objects.filter(user=user)
         return Response(EducationSerializer(items, many=True).data)
 
 class UserResumesView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
-        user = request.user if request.user.is_authenticated else User.objects.first()
+        user = request.user
         items = CVFile.objects.filter(user=user)
         return Response(CVFileSerializer(items, many=True).data)
 
     def post(self, request):
-        user = request.user if request.user.is_authenticated else User.objects.first()
+        user = request.user
         serializer = CVFileSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(user=user)
@@ -123,8 +125,9 @@ class UserResumesView(views.APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserResumeDetailView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
     def delete(self, request, pk):
-        user = request.user if request.user.is_authenticated else User.objects.first()
+        user = request.user
         try:
             cv = CVFile.objects.get(id=pk, user=user)
             cv.delete()
@@ -133,7 +136,7 @@ class UserResumeDetailView(views.APIView):
             return Response({'detail': 'Resume not found'}, status=status.HTTP_404_NOT_FOUND)
 
     def patch(self, request, pk):
-        user = request.user if request.user.is_authenticated else User.objects.first()
+        user = request.user
         try:
             cv = CVFile.objects.get(id=pk, user=user)
             if request.data.get('isDefault') is not None:

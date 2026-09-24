@@ -138,7 +138,7 @@ interface AppContextType {
 
   
 
-  handleUploadCV: (name: string, size: string) => void;
+  handleUploadCV: (file: File) => Promise<void>;
   handleSetDefaultCV: (id: string) => void;
   handleDeleteCV: (id: string) => void;
 
@@ -637,11 +637,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [showToast]);
 
 
-  const handleUploadCV = useCallback(async (name: string, size: string) => {
-    const saved = await authAPI.uploadCV({ name, size, isDefault: false });
-    const newCV: CVFile = saved ? saved : { id: `cv-${Date.now()}`, name, size, uploadDate: 'اليوم', isDefault: false };
-    setCvFiles(prev => [newCV, ...prev]);
-    showToast(`تم رفع ملف السيرة الذاتية "${name}" بنجاح`);
+  const handleUploadCV = useCallback(async (file: File) => {
+    const saved = await authAPI.uploadCV(file);
+    if (!saved) {
+      showToast('تعذر رفع السيرة الذاتية', 'تحقق من تسجيل الدخول وحاول مجددًا');
+      return;
+    }
+    setCvFiles(prev => [saved, ...prev]);
+    showToast(`تم رفع ملف السيرة الذاتية "${file.name}" بنجاح`);
   }, [showToast]);
 
   const handleSetDefaultCV = useCallback((id: string) => {

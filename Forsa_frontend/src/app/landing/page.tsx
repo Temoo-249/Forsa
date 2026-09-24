@@ -11,6 +11,7 @@ export default function LandingPage() {
     <LandingView
       onNavigate={app.navigate}
       featuredJobs={app.jobs}
+      companies={app.companies}
       onSelectJobForDetail={(job) => app.setSelectedJobForDetail(job)}
       onSelectJobForApply={(job) => app.setSelectedJobForApply(job)}
     />

@@ -18,7 +18,10 @@ class CompanyListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         import uuid
-        user = self.request.user if self.request.user.is_authenticated else None
+        user = self.request.user
+        if not user.is_authenticated or user.role != 'employer':
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied('Only employers can create companies')
         serializer.save(
             user=user,
             id=f"company-{uuid.uuid4().hex[:12]}"
@@ -38,6 +41,9 @@ class CompanyDetailView(APIView):
             company = Company.objects.get(id=pk)
         except Company.DoesNotExist:
             return Response({'detail': 'Company not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if not request.user.is_authenticated or company.user_id != request.user.id:
+            return Response({'detail': 'You do not own this company'}, status=status.HTTP_403_FORBIDDEN)
 
         old_name = company.name
         serializer = CompanySerializer(company, data=request.data, partial=True)

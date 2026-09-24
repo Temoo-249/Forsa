@@ -16,6 +16,7 @@ class JobSerializer(serializers.ModelSerializer):
             'skills', 'description', 'requirements', 'isVerified',
             'isSaved', 'applied'
         ]
+        read_only_fields = ['id', 'company', 'isSaved', 'applied']
 
     def get_isSaved(self, obj):
         request = self.context.get('request')

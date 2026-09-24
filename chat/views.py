@@ -1,28 +1,32 @@
 ﻿from rest_framework import status, views
 from rest_framework.response import Response
+from rest_framework import permissions
 from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
 from accounts.models import User
 import uuid
 
 class ConversationListView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
-        user = request.user if request.user.is_authenticated else User.objects.first()
+        user = request.user
         conversations = Conversation.objects.filter(user=user).order_by('-updated_at')
         return Response(ConversationSerializer(conversations, many=True).data)
 
 class ConversationDetailView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
     def get(self, request, pk):
         try:
-            conv = Conversation.objects.get(id=pk)
+            conv = Conversation.objects.get(id=pk, user=request.user)
             return Response(ConversationSerializer(conv).data)
         except Conversation.DoesNotExist:
             return Response({'detail': 'Conversation not found'}, status=status.HTTP_404_NOT_FOUND)
 
 class SendMessageView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
     def post(self, request, pk):
         try:
-            conv = Conversation.objects.get(id=pk)
+            conv = Conversation.objects.get(id=pk, user=request.user)
         except Conversation.DoesNotExist:
             return Response({'detail': 'Conversation not found'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -48,9 +52,10 @@ class SendMessageView(views.APIView):
         return Response(MessageSerializer(msg).data, status=status.HTTP_201_CREATED)
 
 class RespondOfferView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
     def post(self, request, pk, message_id):
         try:
-            msg = Message.objects.get(id=message_id, conversation__id=pk)
+            msg = Message.objects.get(id=message_id, conversation__id=pk, conversation__user=request.user)
         except Message.DoesNotExist:
             return Response({'detail': 'Message not found'}, status=status.HTTP_404_NOT_FOUND)
 

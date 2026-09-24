@@ -9,7 +9,9 @@ import {
   AuthUser
 } from '../types';
 
- const API_BASE = (typeof window !== 'undefined' && (window as any).__FORSA_API_BASE__) || 'https://believable-commitment-production-ed28.up.railway.app/api';
+// Vercel exposes only NEXT_PUBLIC_* values to the browser.  Keep the deployed
+// API configurable and use the local Django server during development.
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api').replace(/\/$/, '');
 
 function getAuthHeaders() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('forsa_auth_token') : null;
@@ -17,6 +19,11 @@ function getAuthHeaders() {
     'Content-Type': 'application/json',
     ...(token ? { 'Authorization': 'Token ' + token } : {})
   };
+}
+
+function getUploadHeaders() {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forsa_auth_token') : null;
+  return token ? { Authorization: `Token ${token}` } : {};
 }
 
 async function handleResponse<T>(res: Response, fallback: T): Promise<T> {
@@ -121,12 +128,16 @@ export const authAPI = {
     }
   },
 
-  async uploadCV(cv: { name: string; size?: string; isDefault?: boolean }) {
+  async uploadCV(file: File) {
     try {
+      const body = new FormData();
+      body.append('name', file.name);
+      body.append('size', `${(file.size / (1024 * 1024)).toFixed(1)} MB`);
+      body.append('file', file);
       const res = await fetch(API_BASE + '/auth/resumes/', {
         method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(cv)
+        headers: getUploadHeaders(),
+        body
       });
       return res.ok ? await res.json() : null;
     } catch (e) {

@@ -23,6 +23,7 @@ class CVFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = CVFile
         fields = ['id', 'name', 'uploadDate', 'size', 'isDefault', 'file']
+        extra_kwargs = {'file': {'required': False}}
 
 class UserSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()

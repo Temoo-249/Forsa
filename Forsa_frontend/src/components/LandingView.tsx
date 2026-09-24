@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { TabType, Job } from '../types';
+import { TabType, Job, Company } from '../types';
 import { ForsaLogo } from './ForsaLogo';
 import { 
   Briefcase, 
@@ -25,6 +25,7 @@ import {
 interface LandingViewProps {
   onNavigate: (tab: TabType) => void;
   featuredJobs: Job[];
+  companies: Company[];
   onSelectJobForDetail: (job: Job) => void;
   onSelectJobForApply: (job: Job) => void;
 }
@@ -32,6 +33,7 @@ interface LandingViewProps {
 export const LandingView: React.FC<LandingViewProps> = ({
   onNavigate,
   featuredJobs,
+  companies,
   onSelectJobForDetail,
   onSelectJobForApply
 }) => {
@@ -177,10 +179,10 @@ export const LandingView: React.FC<LandingViewProps> = ({
       {/* Stats Cards Row */}
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'وظيفة شاغرة متاحة', val: '—', icon: Briefcase, color: 'text-blue-600' },
-          { label: 'شركة موثقة توظف', val: '—', icon: Building2, color: 'text-indigo-600' },
-          { label: 'كفاءة وباحث عن عمل', val: '—', icon: Users, color: 'text-sky-600' },
-          { label: 'نسبة نجاح التوظيف', val: '—', icon: Award, color: 'text-emerald-600' },
+          { label: 'وظيفة شاغرة متاحة', val: featuredJobs.length.toLocaleString('ar'), icon: Briefcase, color: 'text-blue-600' },
+          { label: 'شركة موثقة توظف', val: companies.filter(company => company.isVerified).length.toLocaleString('ar'), icon: Building2, color: 'text-indigo-600' },
+          { label: 'شركة تنشر فرصًا', val: companies.length.toLocaleString('ar'), icon: Users, color: 'text-sky-600' },
+          { label: 'وظائف تم التقديم عليها', val: featuredJobs.filter(job => job.applied).length.toLocaleString('ar'), icon: Award, color: 'text-emerald-600' },
         ].map((stat, idx) => (
           <div
             key={idx}

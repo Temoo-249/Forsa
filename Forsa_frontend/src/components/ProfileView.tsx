@@ -36,7 +36,7 @@ interface ProfileViewProps {
   onAddExperience: (exp: Omit<ExperienceItem, 'id'>) => void;
   educations: EducationItem[];
   cvFiles: CVFile[];
-  onUploadCV: (name: string, size: string) => void;
+  onUploadCV: (file: File) => Promise<void>;
   onSetDefaultCV: (id: string) => void;
   onDeleteCV: (id: string) => void;
   currentUser?: AuthUser;
@@ -76,7 +76,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const userPhone = (currentUser as any)?.phone || '';
   const userLinkedin = (currentUser as any)?.linkedin || '';
   const userPortfolio = (currentUser as any)?.portfolio || '';
-  console.log('🔍 Current User in ProfileView:', currentUser);
   const hasSocialLinks = userEmail || userPhone || userLinkedin || userPortfolio;
 
 
@@ -93,7 +92,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const [newExpDesc, setNewExpDesc] = useState('');
 
 
-const { handleUpdateProfile } = useApp(); // تأكد من الاستيراد فوق
+const { handleUpdateProfile, applications, posts } = useApp();
 
 const openEditModal = () => {
   setEditName(userName === 'مستخدم جديد' ? '' : userName);
@@ -149,11 +148,16 @@ const openEditModal = () => {
     setShowExpModal(false);
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const sizeStr = `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
-      onUploadCV(file.name, sizeStr);
+      if (file.size > 5 * 1024 * 1024) {
+        alert('الحد الأقصى لحجم السيرة الذاتية هو 5 ميجابايت.');
+        e.target.value = '';
+        return;
+      }
+      await onUploadCV(file);
+      e.target.value = '';
     }
   };
 
@@ -321,19 +325,19 @@ const openEditModal = () => {
           {/* Key Stats Bar */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 mt-6 border-t border-slate-100">
             <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 text-center">
-             <span className="text-lg sm:text-xl font-black text-blue-700 block">—</span>
+             <span className="text-lg sm:text-xl font-black text-blue-700 block">{applications.length}</span>
              <span className="text-xs text-slate-400 font-semibold">طلبات وظيفية</span>
             </div>
             <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 text-center">
-              <span className="text-lg sm:text-xl font-black text-slate-900 block">—</span>
+              <span className="text-lg sm:text-xl font-black text-slate-900 block">{posts.length}</span>
               <span className="text-xs text-slate-400 font-semibold">منشورات ومقالات</span>
             </div>
             <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 text-center">
-              <span className="text-lg sm:text-xl font-black text-slate-900 block">—</span>
+              <span className="text-lg sm:text-xl font-black text-slate-900 block">{applications.filter(app => app.status === 'التوظيف').length}</span>
               <span className="text-xs text-slate-400 font-semibold">مشاهدات للملف</span>
             </div>
             <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 text-center">
-              <span className="text-lg sm:text-xl font-black text-slate-900 block">—</span>
+              <span className="text-lg sm:text-xl font-black text-slate-900 block">{skills.length}</span>
               <span className="text-xs text-slate-400 font-semibold">متابع مهني</span>
             </div>
           </div>

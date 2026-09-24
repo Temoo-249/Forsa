@@ -135,9 +135,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ─── CORS Settings ────────────────────────────────────────
 CORS_ALLOWED_ORIGINS = [
-    "https://forsa-eight.vercel.app",
-    "https://forsa-eight-git-main.vercel.app",
-    "http://localhost:3000",
+    origin.strip().rstrip('/')
+    for origin in os.environ.get(
+        'CORS_ALLOWED_ORIGINS',
+        'https://forsa-eight.vercel.app,https://forsa-eight-git-main.vercel.app,http://localhost:3000'
+    ).split(',')
+    if origin.strip()
 ]
 CORS_ALLOW_CREDENTIALS = True
 

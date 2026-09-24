@@ -1,5 +1,6 @@
 ﻿from rest_framework import status, views
 from rest_framework.response import Response
+from rest_framework import permissions
 from django.db.models import Q
 from .models import Job, Application, SavedJob
 from .serializers import JobSerializer, ApplicationSerializer, JobApplicantSerializer
@@ -33,13 +34,23 @@ class JobListCreateView(views.APIView):
         return Response(serializer.data)
 
     def post(self, request):
+        if not request.user.is_authenticated:
+            return Response({'detail': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
+        if request.user.role != 'employer':
+            return Response({'detail': 'Only employers can create jobs'}, status=status.HTTP_403_FORBIDDEN)
         data = request.data.copy()
         if 'id' not in data or not data['id']:
             data['id'] = f"job-{uuid.uuid4().hex[:6]}"
+        company = Company.objects.filter(user=request.user).first()
+        if not company:
+            return Response({'detail': 'Create your company profile before posting a job'}, status=status.HTTP_400_BAD_REQUEST)
+        data['company'] = company.name
         serializer = JobSerializer(data=data, context={'request': request})
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            job = serializer.save(company_ref=company)
+            company.open_jobs_count = Job.objects.filter(company_ref=company).count()
+            company.save(update_fields=['open_jobs_count'])
+            return Response(JobSerializer(job, context={'request': request}).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class JobDetailView(views.APIView):
@@ -51,13 +62,14 @@ class JobDetailView(views.APIView):
             return Response({'detail': 'Job not found'}, status=status.HTTP_404_NOT_FOUND)
 
 class ToggleSaveJobView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
     def post(self, request, pk):
         try:
             job = Job.objects.get(id=pk)
         except Job.DoesNotExist:
             return Response({'detail': 'Job not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        user = request.user if request.user.is_authenticated else User.objects.first()
+        user = request.user
         saved = SavedJob.objects.filter(user=user, job=job).first()
         if saved:
             saved.delete()
@@ -67,13 +79,14 @@ class ToggleSaveJobView(views.APIView):
             return Response({'isSaved': True, 'message': 'Job saved'})
 
 class ApplyJobView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
     def post(self, request, pk):
         try:
             job = Job.objects.get(id=pk)
         except Job.DoesNotExist:
             return Response({'detail': 'Job not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        user = request.user if request.user.is_authenticated else User.objects.first()
+        user = request.user
 
         existing = Application.objects.filter(user=user, job=job).first()
         if existing:
@@ -119,18 +132,20 @@ class ApplyJobView(views.APIView):
         return Response(ApplicationSerializer(app).data, status=status.HTTP_201_CREATED)
 
 class ApplicationListView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
-        user = request.user if request.user.is_authenticated else User.objects.first()
+        user = request.user
         apps = Application.objects.filter(user=user).order_by('-created_at')
         return Response(ApplicationSerializer(apps, many=True).data)
 
 
 class EmployerApplicantsView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
         # جيب المستخدم الحالي
-        user = request.user if request.user.is_authenticated else User.objects.first()
-        if not user:
-            return Response({'detail': 'No user'}, status=status.HTTP_401_UNAUTHORIZED)
+        user = request.user
+        if user.role != 'employer':
+            return Response({'detail': 'Only employers can view applicants'}, status=status.HTTP_403_FORBIDDEN)
 
         # جيب شركة المستخدم
         company = Company.objects.filter(user=user).first()
@@ -150,6 +165,9 @@ class EmployerApplicantsView(views.APIView):
             app = Application.objects.get(id=pk)
         except Application.DoesNotExist:
             return Response({'detail': 'Applicant not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if request.user.role != 'employer' or app.job.company_ref_id not in Company.objects.filter(user=request.user).values_list('id', flat=True):
+            return Response({'detail': 'You do not own this job'}, status=status.HTTP_403_FORBIDDEN)
 
         status_val = request.data.get('status')
         interview_date = request.data.get('interviewDate')
