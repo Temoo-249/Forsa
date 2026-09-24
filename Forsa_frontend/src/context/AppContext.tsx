@@ -93,6 +93,7 @@ interface AppContextType {
 
   // Auth
   currentUser: AuthUser | null;
+  authReady: boolean;
   setCurrentUser: React.Dispatch<React.SetStateAction<AuthUser | null>>;
   userRole: UserRole;
   setUserRole: React.Dispatch<React.SetStateAction<UserRole>>;
@@ -204,6 +205,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // ── Auth State (يبدأ فاضي - المستخدم لازم يسجل دخول) ──
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  // Keep the landing page from briefly rendering for a restored session while
+  // the token is being checked.
+  const [authReady, setAuthReady] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>('seeker');
 
   // ── Core Data (كلها بتبدأ فاضية، هتتملى من الـ API) ──
@@ -297,6 +301,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (err) {
         console.warn('Sync with backend failed:', err);
+      } finally {
+        if (isMounted) setAuthReady(true);
       }
     };
     fetchBackendData();
@@ -797,9 +803,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     showToast('تم حذف الوظيفة من المنصة');
   }, [jobs, showToast]);
 
-  const handleToggleJobStatus = useCallback((_jobId: string) => {
-    showToast('تم تغيير حالة الوظيفة');
-  }, [showToast]);
+  const handleToggleJobStatus = useCallback(async (jobId: string) => {
+    const job = jobs.find(item => item.id === jobId);
+    if (!job) return;
+    const nextStatus = job.status === 'active' ? 'paused' : 'active';
+    const saved = await jobsAPI.updateJobStatus(jobId, nextStatus);
+    if (!saved) {
+      showToast('تعذر تغيير حالة الوظيفة', 'تحقق من الصلاحيات والاتصال ثم حاول مجددًا');
+      return;
+    }
+    setJobs(previous => previous.map(item => item.id === jobId ? saved : item));
+    showToast(nextStatus === 'active' ? 'تم نشر الوظيفة وإتاحتها للباحثين' : 'تم إيقاف الوظيفة مؤقتًا');
+  }, [jobs, showToast]);
 
   // ═══════════════════════════════════════════════════════════════
   // CONTEXT VALUE
@@ -807,7 +822,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<AppContextType>(() => ({
     handleUpdateProfile,
     currentTab, navigate,
-    currentUser, setCurrentUser, userRole, setUserRole,
+    currentUser, authReady, setCurrentUser, userRole, setUserRole,
     handleLoginSuccess, handleLogout, handleToggleRole,
     jobs, setJobs, handleToggleSaveJob, handleApplySuccess,
     applications,

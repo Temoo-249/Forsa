@@ -238,6 +238,20 @@ export const jobsAPI = {
     }
   },
 
+  async updateJobStatus(jobId: string, status: Job['status']): Promise<Job | null> {
+    try {
+      const res = await fetch(API_BASE + '/jobs/' + jobId + '/', {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ status })
+      });
+      return res.ok ? await res.json() : null;
+    } catch (e) {
+      console.error('Failed to update job status', e);
+      return null;
+    }
+  },
+
   async toggleSave(jobId: string): Promise<{ isSaved: boolean } | null> {
     try {
       const res = await fetch(API_BASE + '/jobs/' + jobId + '/save/', {
@@ -560,6 +574,7 @@ export const profilesAPI = {
       return res.ok ? await res.json() : null;
     } catch { return null; }
   },
+
   async toggleFollow(id: string): Promise<{ isFollowing: boolean; followersCount: number } | null> {
     try {
       const res = await fetch(`${API_BASE}/auth/profiles/${id}/follow/`, { method: 'POST', headers: getAuthHeaders() });

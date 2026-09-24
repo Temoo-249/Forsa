@@ -67,7 +67,7 @@ export const JobsView: React.FC<JobsViewProps> = ({
       const matchLocation = !locationFilter || job.location.toLowerCase().includes(locationFilter.toLowerCase());
       const matchDomain = selectedDomain === 'all' || job.domain === selectedDomain;
       const matchType = selectedType === 'all' || job.type === selectedType;
-      const matchRemote = !onlyRemote || job.location.includes('عن بُعد') || job.type === 'عن بُعد';
+      const matchRemote = !onlyRemote || job.workMode === 'remote' || job.location.includes('عن بُعد') || job.type === 'عن بُعد';
 
       return matchSearch && matchLocation && matchDomain && matchType && matchRemote;
     }).sort((a, b) => {

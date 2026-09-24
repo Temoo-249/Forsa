@@ -6,7 +6,7 @@ from .models import Job, Application, SavedJob, ApplicationStatusLog
 from .serializers import JobSerializer, ApplicationSerializer, JobApplicantSerializer
 from accounts.models import User
 import uuid
-from companies.models import Company
+from companies.models import Company, CompanyMember
 class JobListCreateView(views.APIView):
     def get(self, request):
         queryset = Job.objects.all().order_by('-created_at')
@@ -75,7 +75,12 @@ class JobDetailView(views.APIView):
         except Job.DoesNotExist:
             return Response({'detail': 'Job not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        if request.user.role != 'employer' or job.company_ref_id not in Company.objects.filter(user=request.user).values_list('id', flat=True):
+        is_company_manager = CompanyMember.objects.filter(
+            company_id=job.company_ref_id, user=request.user, is_active=True,
+            member_role__in=['owner', 'admin', 'recruiter', 'hr']
+        ).exists()
+        owns_company = Company.objects.filter(id=job.company_ref_id, user=request.user).exists()
+        if request.user.role != 'employer' or not (owns_company or is_company_manager):
             return Response({'detail': 'You do not own this job'}, status=status.HTTP_403_FORBIDDEN)
 
         company = job.company_ref
@@ -84,6 +89,30 @@ class JobDetailView(views.APIView):
             company.open_jobs_count = Job.objects.filter(company_ref=company).count()
             company.save(update_fields=['open_jobs_count'])
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def patch(self, request, pk):
+        """Allow an authorised company team member to change a job lifecycle state."""
+        if not request.user.is_authenticated:
+            return Response({'detail': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
+        try:
+            job = Job.objects.get(id=pk)
+        except Job.DoesNotExist:
+            return Response({'detail': 'Job not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        is_company_manager = CompanyMember.objects.filter(
+            company_id=job.company_ref_id, user=request.user, is_active=True,
+            member_role__in=['owner', 'admin', 'recruiter', 'hr']
+        ).exists()
+        owns_company = Company.objects.filter(id=job.company_ref_id, user=request.user).exists()
+        if request.user.role != 'employer' or not (owns_company or is_company_manager):
+            return Response({'detail': 'You do not manage this job'}, status=status.HTTP_403_FORBIDDEN)
+
+        new_status = request.data.get('status')
+        if new_status not in {'active', 'paused', 'closed', 'draft'}:
+            return Response({'detail': 'Invalid job status'}, status=status.HTTP_400_BAD_REQUEST)
+        job.status = new_status
+        job.save(update_fields=['status', 'updated_at'])
+        return Response(JobSerializer(job, context={'request': request}).data)
 
 class ToggleSaveJobView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]

@@ -15,6 +15,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const app = useApp();
   const pathname = usePathname();
   const isAuthPage = ['/auth', '/login', '/register'].includes(pathname);
+  // The public introduction is deliberately distraction-free.  Navigation is
+  // shown everywhere else, including all signed-in areas of the product.
+  const isPublicLanding = pathname === '/';
 
   const unreadMessagesCount = app.conversations.reduce((acc, c) => acc + c.unreadCount, 0);
 
@@ -22,7 +25,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-blue-600 selection:text-white" dir="rtl">
 
       {/* The authentication pages deliberately use their focused, standalone layout. */}
-      {!isAuthPage && <Navbar
+      {!isAuthPage && !isPublicLanding && <Navbar
         currentTab={app.currentTab}
         onSelectTab={app.navigate}
         applicationsCount={app.applications.length}
@@ -43,16 +46,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* Footer */}
-      <Footer onNavigate={app.navigate} onShowMessage={(msg) => app.showToast(msg)} />
+      {!isPublicLanding && <Footer onNavigate={app.navigate} onShowMessage={(msg) => app.showToast(msg)} />}
 
       {/* Mobile Bottom Navigation */}
-      <MobileNav
+      {!isPublicLanding && <MobileNav
         currentTab={app.currentTab}
         onSelectTab={app.navigate}
         applicationsCount={app.applications.length}
         unreadMessagesCount={unreadMessagesCount}
         userRole={app.userRole}
       />
+      }
 
       {/* ─── Modals ─── */}
       <JobDetailModal

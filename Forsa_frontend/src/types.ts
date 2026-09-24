@@ -72,6 +72,14 @@ export interface Job {
   skills: string[];
   description: string;
   requirements: string[];
+  employmentType?: string;
+  workMode?: 'onsite' | 'hybrid' | 'remote' | '';
+  salaryType?: 'fixed' | 'range' | 'negotiable';
+  salaryMin?: string | null;
+  salaryMax?: string | null;
+  currency?: string;
+  status?: 'active' | 'paused' | 'closed' | 'draft';
+  deadline?: string | null;
   isVerified?: boolean;
   isSaved?: boolean;
   applied?: boolean;

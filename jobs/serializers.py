@@ -9,6 +9,11 @@ class JobSerializer(serializers.ModelSerializer):
     isVerified = serializers.BooleanField(source='is_verified', required=False)
     isSaved = serializers.SerializerMethodField()
     applied = serializers.SerializerMethodField()
+    employmentType = serializers.CharField(source='employment_type', required=False, allow_blank=True)
+    workMode = serializers.CharField(source='work_mode', required=False, allow_blank=True)
+    salaryType = serializers.CharField(source='salary_type', required=False)
+    salaryMin = serializers.DecimalField(source='salary_min', max_digits=12, decimal_places=2, required=False, allow_null=True)
+    salaryMax = serializers.DecimalField(source='salary_max', max_digits=12, decimal_places=2, required=False, allow_null=True)
 
     class Meta:
         model = Job
@@ -16,7 +21,8 @@ class JobSerializer(serializers.ModelSerializer):
             'id', 'title', 'company', 'companyId', 'ownerId', 'location', 'logo', 'type',
             'domain', 'salary', 'postedTime', 'applicantsCount',
             'skills', 'description', 'requirements', 'isVerified',
-            'isSaved', 'applied'
+            'isSaved', 'applied', 'employmentType', 'workMode', 'salaryType',
+            'salaryMin', 'salaryMax', 'currency', 'status', 'deadline'
         ]
         read_only_fields = ['id', 'company', 'isSaved', 'applied']
 
